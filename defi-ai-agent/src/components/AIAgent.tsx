@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-type TabType =   'general'|'swap' | 'lend' | 'trade';
+type TabType = 'general'|'swap' | 'lend' | 'trade';
 type Chain = 'arbitrum' | 'optimism' | 'base' | 'ethereum';
 
 export default function AIAgent() {
@@ -24,6 +24,13 @@ export default function AIAgent() {
   const [error, setError] = useState('');
   
   const { isConnected } = useAccount();
+
+
+  React.useEffect(() => {
+    if (!isConnected && activeTab !== 'general') {
+      setActiveTab('general');
+    }
+  }, [isConnected, activeTab]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -77,8 +84,10 @@ export default function AIAgent() {
     { id: 'swap', label: 'Swap', icon: <ArrowRightLeft size={20} /> },
     { id: 'lend', label: 'Lending', icon: <PiggyBank size={20} /> },
     { id: 'trade', label: 'Trading', icon: <LineChart size={20} /> },
-
   ];
+
+  // Filter tabs based on wallet connection
+  const visibleTabs = isConnected ? tabs : tabs.filter(tab => tab.id === 'general');
 
   const chains = [
     { id: 'arbitrum', label: 'Arbitrum' },
@@ -91,36 +100,38 @@ export default function AIAgent() {
         <div className="mb-6">
           <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 flex items-center gap-2 mb-2">
             <Rocket className="text-purple-500" size={24} />
-            DeFi Assistant
+            Trix
           </h1>
           <ConnectButton />
         </div>
 
-        {/* Chain Selection */}
-        <div className="my-6">
-          <label className="block text-sm font-medium text-purple-300 mb-2">
-            Select Chain
-          </label>
-          <Select
-            value={selectedChain}
-            onValueChange={(value: Chain) => setSelectedChain(value)}
-          >
-            <SelectTrigger className="w-full bg-black/50 border-purple-500/20">
-              <SelectValue placeholder="Select chain" />
-            </SelectTrigger>
-            <SelectContent>
-              {chains.map((chain) => (
-                <SelectItem key={chain.id} value={chain.id}>
-                  {chain.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* Chain Selection - Only show when wallet is connected */}
+        {isConnected && (
+          <div className="my-6">
+            <label className="block text-sm font-medium text-purple-300 mb-2">
+              Select Chain
+            </label>
+            <Select
+              value={selectedChain}
+              onValueChange={(value: Chain) => setSelectedChain(value)}
+            >
+              <SelectTrigger className="w-full bg-black/50 text-white border-purple-500/20">
+                <SelectValue placeholder="Select chain" />
+              </SelectTrigger>
+              <SelectContent>
+                {chains.map((chain) => (
+                  <SelectItem key={chain.id} value={chain.id}>
+                    {chain.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         
         {/* Tab Selection */}
         <div className="space-y-2">
-          {tabs.map((tab) => (
+          {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
@@ -178,7 +189,9 @@ export default function AIAgent() {
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  activeTab === 'swap'
+                  !isConnected
+                    ? "Connect your wallet to access DeFi features, or ask general questions"
+                    : activeTab === 'swap'
                     ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
                     : activeTab === 'lend'
                     ? "e.g., 'Find best lending rates for ETH'"
@@ -194,7 +207,7 @@ export default function AIAgent() {
             </div>
             <button
               type="submit"
-              disabled={loading || !isConnected || !userInput.trim()}
+              disabled={loading || (!isConnected && activeTab !== 'general') || !userInput.trim()}
               className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-4 rounded-lg flex items-center justify-center transition-all duration-200 mb-2"
             >
               <Send size={20} />
