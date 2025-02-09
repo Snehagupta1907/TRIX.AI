@@ -104,7 +104,6 @@ export default function AIAgent() {
           </h1>
           <ConnectButton />
         </div>
-
         {/* Chain Selection - Only show when wallet is connected */}
         {isConnected && (
           <div className="my-6">
