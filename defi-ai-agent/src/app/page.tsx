@@ -2,7 +2,7 @@
 "use client";
 
 import { WagmiProvider } from "wagmi";
-import { arbitrum } from "wagmi/chains";
+import { arbitrumSepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
 import AIAgent from "@/components/AIAgent";
@@ -12,9 +12,9 @@ import "@rainbow-me/rainbowkit/styles.css";
 const config = getDefaultConfig({
   appName: "RainbowKit demo",
   projectId: "6780ea76605adb8e2893655e41c392a3",
-  chains: [arbitrum],
+  chains: [arbitrumSepolia],
   transports: {
-    [arbitrum.id]: http(),
+    [arbitrumSepolia.id]: http(),
   },
 });
 
