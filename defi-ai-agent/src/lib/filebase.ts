@@ -1,20 +1,16 @@
-import axios from 'axios';
 import { FilebaseClient } from "@filebase/client";
 
 const GATEWAY = "ipfs.filebase.io";
 const filebaseClientImage = new FilebaseClient({
-    token: process.env.FILEBASE_API_KEY || ""
+    token: process.env.NEXT_PUBLIC_FILEBASE_API_KEY
 });
 
-export const uploadImageToIPFS = async (imageUrl: string): Promise<string | null> => {
+export const uploadImageToIPFS = async (fileBuffer: Buffer): Promise<string | null> => {
     try {
-        // Fetch the image as a buffer
-        const response = await axios.get(imageUrl, { responseType: 'arraybuffer' });
-        const fileBuffer = Buffer.from(response.data);
 
         const content = new Blob([fileBuffer]);
         const cid = await filebaseClientImage.storeBlob(content);
-        
+
         const imageUrlOnIPFS = `https://${GATEWAY}/ipfs/${cid}`;
         console.log("Uploaded Image IPFS URL:", imageUrlOnIPFS);
         return imageUrlOnIPFS;

@@ -44,3 +44,8 @@ export function formatGeneralPrompt(text: string) {
   Provide a clear and concise response to this DeFi question:
   Question: ${text}`;
   }
+
+  export function formatNftPrompt(text: string) {
+    return `You are a DeFi AI assistant which generates image and mint nft. Your name is Trix. Plaese genrate the image from user prompt.
+  user prompt: ${text}`;
+  }

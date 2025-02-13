@@ -21,6 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { generateImage } from "@/utils/img-gen";
+import { formatNftPrompt } from "@/utils/prompt";
 
 type TabType = "general" | "swap" | "lend" | "trade" | "mint";
 type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
@@ -58,6 +60,20 @@ export default function AIAgent() {
       
       // Use different endpoints based on active tab
       switch (activeTab) {
+        case "mint":
+          if (!address) {
+            setError("Wallet must be connected to mint an NFT.");
+            return;
+          }
+          const tokenUri = await generateImage(formatNftPrompt(currentInput));
+          console.log(tokenUri);
+          const requestBody = { WALLET_ADDRESS: address, TOKEN_URI: tokenUri };
+          response = await fetch("/api/nft", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(requestBody),
+          });
+          break;
         case 'swap':
           response = await fetch('/api/swap', {
             method: 'POST',
@@ -90,46 +106,14 @@ export default function AIAgent() {
 
       const data = await response.json();
 
+      console.log({data})
+
       if (data.error) {
         setError(data.error);
         setMessages(prev => [...prev, { 
           role: 'assistant', 
           content: `Error: ${data.error}` 
         }]);
-        return;
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: data.data },
-      ]);
-    } catch (err) {
-      setError("Failed to process request. Please try again.");
-      console.error("Error:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleMint = async () => {
-    setError("");
-    setLoading(true);
-    console.log("Minting NFT");
-    try {
-      const response = await fetch("/api/mint-nft", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          WALLET_ADDRESS: address,
-          TOKEN_URI : "https://ivory-injured-gerbil-133.mypinata.cloud/ipfs/bafkreifsghmurcvqcer5axfj4jaryfa42gxmqgqv3pkjl56g2k6bcigq4u"
-        }),
-      });
-      const data = await response.json();
-
-      if (data.error) {
-        setError(data.error);
         return;
       }
 
@@ -164,20 +148,20 @@ export default function AIAgent() {
 
   const chains = [{ id: "arbitrum", label: "Arbitrum" }];
 
-  const getPlaceholderText = () => {
-    if (!isConnected) return "Connect your wallet to access DeFi features, or ask general questions";
+  // const getPlaceholderText = () => {
+  //   if (!isConnected) return "Connect your wallet to access DeFi features, or ask general questions";
     
-    switch (activeTab) {
-      case 'swap':
-        return "e.g., 'Swap 0.1 ETH to USDC with best rate'";
-      case 'lend':
-        return "Ask about current lending opportunities and rates";
-      case 'trade':
-        return "Ask about trading opportunities and market analysis";
-      default:
-        return "How can I help you with your DeFi needs?";
-    }
-  };
+  //   switch (activeTab) {
+  //     case 'swap':
+  //       return "e.g., 'Swap 0.1 ETH to USDC with best rate'";
+  //     case 'lend':
+  //       return "Ask about current lending opportunities and rates";
+  //     case 'trade':
+  //       return "Ask about trading opportunities and market analysis";
+  //     default:
+  //       return "How can I help you with your DeFi needs?";
+  //   }
+  // };
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
@@ -229,7 +213,6 @@ export default function AIAgent() {
               {tab.label}
             </button>
           ))}
-            <button onClick={handleMint} className="text-white bg-blue-500 px-4 py-2 rounded-lg">Mint</button>
         </div>
       </div>
 

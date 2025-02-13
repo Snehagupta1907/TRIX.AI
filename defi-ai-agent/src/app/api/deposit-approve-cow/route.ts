@@ -12,7 +12,7 @@ import {
 } from "viem";
 import { sepolia } from "viem/chains";
 import { OperationType, MetaTransactionData } from "@safe-global/types-kit";
-import WETH_ABI from "@/lib/abi";
+import {WETH_ABI} from "@/lib/abi";
 import {
     INPUT_AMOUNT,
     COWSWAP_GPv2VAULT_RELAYER_ADDRESS,

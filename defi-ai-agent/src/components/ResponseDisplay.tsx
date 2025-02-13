@@ -4,7 +4,7 @@ import React from 'react';
 
 interface ResponseDisplayProps {
   response: any;
-  type: 'swap' | 'lend' | 'trade' | 'general';
+  type: 'swap' | 'lend' | 'trade' | 'general' | 'mint';
 }
 
 export default function ResponseDisplay({ response, type }: ResponseDisplayProps) {

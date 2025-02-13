@@ -1,4 +1,4 @@
-const WETH_ABI = [
+export const WETH_ABI = [
   {
     constant: true,
     inputs: [],
@@ -152,7 +152,7 @@ const WETH_ABI = [
   },
 ];
 
-const AINFT_ABI = [
+export const AINFT_ABI = [
   {
     inputs: [
       {
@@ -587,4 +587,3 @@ const AINFT_ABI = [
     type: "function",
   },
 ];
-export default { WETH_ABI, AINFT_ABI };
