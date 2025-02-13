@@ -6,7 +6,7 @@ import { arbitrumSepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { http } from "viem";
 import AIAgent from "@/components/AIAgent";
-import { getDefaultConfig, RainbowKitProvider } from "@rainbow-me/rainbowkit";
+import {  getDefaultConfig, lightTheme, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
 
 const config = getDefaultConfig({
@@ -24,7 +24,7 @@ export default function Home() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider modalSize="wide">
+        <RainbowKitProvider theme={lightTheme({accentColor:"#331931"})} modalSize="wide">
           <AIAgent />
         </RainbowKitProvider>
       </QueryClientProvider>
