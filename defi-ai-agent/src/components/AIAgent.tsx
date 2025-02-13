@@ -54,22 +54,48 @@ export default function AIAgent() {
     setUserInput("");
 
     try {
-      const response = await fetch("/api/ai-process", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: currentInput,
-          action: activeTab,
-          chain: selectedChain,
-        }),
-      });
+      let response;
+      
+      // Use different endpoints based on active tab
+      switch (activeTab) {
+        case 'swap':
+          response = await fetch('/api/swap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: currentInput }),
+          });
+          break;
+          
+        case 'lend':
+          response = await fetch('/api/lending', {
+            method: 'GET',
+          });
+          break;
+          
+        case 'trade':
+          response = await fetch('/api/trade', {
+            method: 'GET',
+          });
+          break;
+          
+        case 'general':
+        default:
+          response = await fetch('/api/general', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: currentInput }),
+          });
+          break;
+      }
 
       const data = await response.json();
 
       if (data.error) {
         setError(data.error);
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: `Error: ${data.error}` 
+        }]);
         return;
       }
 
@@ -134,12 +160,24 @@ export default function AIAgent() {
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
   ];
 
-  // Filter tabs based on wallet connection
-  const visibleTabs = isConnected
-    ? tabs
-    : tabs.filter((tab) => tab.id === "general");
+  const visibleTabs = isConnected ? tabs : tabs.filter(tab => tab.id === 'general');
 
   const chains = [{ id: "arbitrum", label: "Arbitrum" }];
+
+  const getPlaceholderText = () => {
+    if (!isConnected) return "Connect your wallet to access DeFi features, or ask general questions";
+    
+    switch (activeTab) {
+      case 'swap':
+        return "e.g., 'Swap 0.1 ETH to USDC with best rate'";
+      case 'lend':
+        return "Ask about current lending opportunities and rates";
+      case 'trade':
+        return "Ask about trading opportunities and market analysis";
+      default:
+        return "How can I help you with your DeFi needs?";
+    }
+  };
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
@@ -152,7 +190,7 @@ export default function AIAgent() {
           </h1>
           <ConnectButton />
         </div>
-        {/* Chain Selection - Only show when wallet is connected */}
+        
         {isConnected && (
           <div className="my-6">
             <label className="block text-sm font-medium text-purple-300 mb-2">
@@ -175,8 +213,7 @@ export default function AIAgent() {
             </Select>
           </div>
         )}
-
-        {/* Tab Selection */}
+        
         <div className="space-y-2">
           {visibleTabs.map((tab) => (
             <button
@@ -198,7 +235,6 @@ export default function AIAgent() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col">
-        {/* Messages Display */}
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {messages.map((message, index) => (
             <div
@@ -228,7 +264,6 @@ export default function AIAgent() {
           )}
         </div>
 
-        {/* Input Form */}
         <div className="border-t border-purple-500/10 p-4 bg-black/40 backdrop-blur-xl">
           <form onSubmit={handleSubmit} className="flex items-end gap-4">
             <div className="flex-1">

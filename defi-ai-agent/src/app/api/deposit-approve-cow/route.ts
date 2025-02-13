@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { NextApiRequest, NextApiResponse } from "next";
+// app/api/execute-safe-tx/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import Safe from "@safe-global/protocol-kit";
 import {
     createPublicClient,
@@ -13,24 +14,22 @@ import { sepolia } from "viem/chains";
 import { OperationType, MetaTransactionData } from "@safe-global/types-kit";
 import WETH_ABI from "@/lib/abi";
 import {
-    INPUT_AMOUNT, COWSWAP_GPv2VAULT_RELAYER_ADDRESS,
-    WETH_ADDRESS
+    INPUT_AMOUNT,
+    COWSWAP_GPv2VAULT_RELAYER_ADDRESS,
+    WETH_ADDRESS,
 } from "@/lib/constants";
 
-
-
-
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Method Not Allowed" });
-    }
-
+export async function POST(request: NextRequest) {
     try {
-        const { SAFE_ADDRESS, SIGNER_PRIVATE_KEY } = req.body;
+        const body = await request.json();
+        const { SAFE_ADDRESS, SIGNER_PRIVATE_KEY } = body;
         const RPC_URL = process.env.RPC_URL;
 
         if (!SAFE_ADDRESS || !SIGNER_PRIVATE_KEY || !RPC_URL) {
-            return res.status(400).json({ error: "Missing required input or environment variables" });
+            return NextResponse.json(
+                { error: "Missing required input or environment variables" },
+                { status: 400 }
+            );
         }
 
         const customChain = defineChain({
@@ -40,11 +39,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
 
         const publicClient = createPublicClient({
-            transport: http(RPC_URL!),
+            transport: http(RPC_URL),
             chain: customChain,
         });
+        
         const walletClient = createWalletClient({
-            transport: http(RPC_URL!),
+            transport: http(RPC_URL),
             chain: customChain,
         });
 
@@ -56,7 +56,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const isSafeDeployed = await protocolKit.isSafeDeployed();
         if (!isSafeDeployed) {
-            return res.status(400).json({ error: "Safe not deployed" });
+            return NextResponse.json(
+                { error: "Safe not deployed" },
+                { status: 400 }
+            );
         }
 
         const callDataDeposit = encodeFunctionData({
@@ -101,14 +104,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             hash: txResponse.hash as `0x${string}`,
         });
 
-        return res.status(200).json({
+        return NextResponse.json({
             message: "Transaction executed successfully",
             transactionHash: txResponse.hash,
             wethBalance: await wethInstance.read.balanceOf([SAFE_ADDRESS]),
-            ethBalance: await publicClient.getBalance({ address: SAFE_ADDRESS as `0x${string}` }),
+            ethBalance: await publicClient.getBalance({ 
+                address: SAFE_ADDRESS as `0x${string}` 
+            }),
         });
     } catch (error) {
         console.error("Error:", error);
-        return res.status(500).json({ error: "Internal Server Error", details: error });
+        return NextResponse.json(
+            { error: "Internal Server Error", details: error },
+            { status: 500 }
+        );
     }
 }
