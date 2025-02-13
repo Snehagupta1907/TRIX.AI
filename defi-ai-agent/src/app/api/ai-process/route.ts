@@ -2,12 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from 'next/server';
 import { createPublicClient, http } from 'viem';
-import { arbitrum } from 'viem/chains';
+import { arbitrumSepolia } from 'viem/chains';
 import OpenAI from 'openai';
 
 // Initialize Viem client for blockchain interactions (if needed)
 const client = createPublicClient({
-  chain: arbitrum,
+  chain: arbitrumSepolia,
   transport: http(),
 });
 
