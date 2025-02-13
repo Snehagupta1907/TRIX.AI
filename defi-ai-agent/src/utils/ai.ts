@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-const HYPERBOLIC_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJzbmVoYWd1cHRhOTg5MzBAZ21haWwuY29tIiwiaWF0IjoxNzM4NTI3ODMxfQ.Yf34haWiFDYqC5ShvcFG-KDhBNGPBLcwb1DWZ4bgu28";
+const HYPERBOLIC_API_KEY = process.env.HYPERBOLIC_API_KEY;
 
 export const aiClient = new OpenAI({
   apiKey: HYPERBOLIC_API_KEY,
