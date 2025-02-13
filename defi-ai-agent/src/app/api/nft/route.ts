@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const privateKey=process.env.WALLET_PRIVATE_KEY
     const { WALLET_ADDRESS, TOKEN_URI } = body;
-    const RPC_URL = process.env.RPC_URL || "https://sepolia-rollup.arbitrum.io/rpc";
+    const RPC_URL =  "https://sepolia-rollup.arbitrum.io/rpc";
 
     if (!privateKey || !WALLET_ADDRESS || !TOKEN_URI) {
       return NextResponse.json(
@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
     const wallet = new ethers.Wallet(privateKey, provider);
 
     const nftContract = new ethers.Contract(AINFT_ADDRESS, AINFT_ABI, wallet);
-    const tx = await nftContract.mintNft(WALLET_ADDRESS, TOKEN_URI);
+    console.log(provider,wallet)
+    const tx = await nftContract.mintNFT(WALLET_ADDRESS, TOKEN_URI);
     await tx.wait();
 
     return NextResponse.json({

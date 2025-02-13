@@ -65,7 +65,8 @@ export default function AIAgent() {
             setError("Wallet must be connected to mint an NFT.");
             return;
           }
-          const tokenUri = await generateImage(formatNftPrompt(currentInput));
+          // const tokenUri = await generateImage(formatNftPrompt(currentInput));
+          const tokenUri="https://ipfs.filebase.io/ipfs/QmbKk1XCwcmaRvNw6KbmGdC4ySFhfsBLWjCBWadUHiyfMy"
           console.log(tokenUri);
           const requestBody = { WALLET_ADDRESS: address, TOKEN_URI: tokenUri };
           response = await fetch("/api/nft", {
