@@ -1,4 +1,5 @@
-import { NextApiRequest, NextApiResponse } from "next";
+// app/api/execute-cow-trade/route.ts
+import { NextRequest, NextResponse } from "next/server";
 import Safe from "@safe-global/protocol-kit";
 import {
   createPublicClient,
@@ -17,20 +18,24 @@ import {
 } from "@cowprotocol/cow-sdk";
 import { VoidSigner } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider } from "@ethersproject/providers";
-// import {
-//     INPUT_AMOUNT, } from "@/lib/constants";
-// COW_ADDRESS, WETH_ADDRESS,
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed" });
-  }
 
+export async function POST(request: NextRequest) {
   try {
-    const { SAFE_ADDRESS, SIGNER_PRIVATE_KEY,buyAddress,sellAddress,inputAmt } = req.body;
+    const body = await request.json();
+    const { 
+      SAFE_ADDRESS, 
+      SIGNER_PRIVATE_KEY, 
+      buyAddress, 
+      sellAddress, 
+      inputAmt 
+    } = body;
     const RPC_URL = process.env.RPC_URL;
 
     if (!SAFE_ADDRESS || !SIGNER_PRIVATE_KEY || !RPC_URL) {
-      return res.status(400).json({ error: "Missing required input or environment variables" });
+      return NextResponse.json(
+        { error: "Missing required input or environment variables" },
+        { status: 400 }
+      );
     }
 
     const protocolKit = await Safe.init({
@@ -102,12 +107,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       hash: txResponse.hash as `0x${string}`,
     });
 
-    return res.status(200).json({
+    return NextResponse.json({
       message: "Transaction executed successfully",
       transactionHash: txResponse.hash,
     });
   } catch (error) {
     console.error("Error:", error);
-    return res.status(500).json({ error: "Internal Server Error", details: error });
+    return NextResponse.json(
+      { error: "Internal Server Error", details: error },
+      { status: 500 }
+    );
   }
 }
