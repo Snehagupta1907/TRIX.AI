@@ -9,6 +9,12 @@ export const aiClient = new OpenAI({
 
 export async function queryLLM(prompt: string) {
   try {
+    if (!HYPERBOLIC_API_KEY) {
+      console.error('Error: OpenAI API key is missing.');
+      throw new Error('OpenAI API key is missing.');
+    }
+
+    console.log(prompt)
     const response = await aiClient.chat.completions.create({
       model: 'meta-llama/Meta-Llama-3-70B-Instruct',
       messages: [{ role: 'system', content: 'You are a DeFi assistant.' }, { role: 'user', content: prompt }],
