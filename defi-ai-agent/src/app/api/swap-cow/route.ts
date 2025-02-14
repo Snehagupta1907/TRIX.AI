@@ -17,6 +17,7 @@ import {
 } from "@cowprotocol/cow-sdk";
 import { VoidSigner } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { COW_ADDRESS, WETH_ADDRESS } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -73,9 +74,9 @@ export async function POST(request: NextRequest) {
     const sdk = new TradingSdk(traderParams, { enableLogging: false });
     const parameters: TradeParameters = {
       kind: OrderKind.SELL,
-      sellToken: sellAddress,
+      sellToken: WETH_ADDRESS,
       sellTokenDecimals: 18,
-      buyToken: buyAddress,
+      buyToken: COW_ADDRESS,
       buyTokenDecimals: 18,
       amount: String(Number(inputAmt) * 10 ** 18),
     };
