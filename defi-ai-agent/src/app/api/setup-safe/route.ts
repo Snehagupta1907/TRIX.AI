@@ -1,4 +1,3 @@
-// app/api/deploy-safe/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Safe, {
   PredictedSafeProps,
@@ -40,60 +39,78 @@ export async function POST(request: NextRequest) {
 
     const safeAddress = await protocolKit.getAddress();
 
-    const deploymentTransaction = await protocolKit.createSafeDeploymentTransaction();
-
-    const client = await protocolKit.getSafeProvider().getExternalSigner();
-    if (!client) {
-      return NextResponse.json(
-        { error: "Failed to get signer" },
-        { status: 500 }
-      );
-    }
-
+    // Fund the Safe before confirming address
     const customChain = defineChain({
       ...sepolia,
       name: "custom chain",
       transport: http(RPC_URL),
     });
 
-    const transactionHash = await client.sendTransaction({
-      to: deploymentTransaction.to as `0x${string}`,
-      value: BigInt(deploymentTransaction.value),
-      data: deploymentTransaction.data as `0x${string}`,
+    const walletClient = createWalletClient({
+      transport: http(RPC_URL),
       chain: customChain,
     });
 
-    const walletClient = createWalletClient({ 
-      transport: http(RPC_URL), 
-      chain: customChain 
-    });
-    
-    const publicClient = createPublicClient({ 
-      chain: customChain, 
-      transport: http() 
-    });
+    // Send some funds to the Safe (ensure the Safe address is valid)
+    if (safeAddress) {
+      await walletClient.sendTransaction({
+        account: account,
+        to: safeAddress as `0x${string}`,
+        value: BigInt(0.1 * 1e18), // Fund the Safe with 0.1 ETH (adjust as needed)
+      });
+    }
 
-    const txReceipt = await publicClient.waitForTransactionReceipt({ 
-      hash: transactionHash 
-    });
+    // If Safe is not deployed, deploy it now
+    if (!safeAddress) {
+      const deploymentTransaction = await protocolKit.createSafeDeploymentTransaction();
 
-    // Fund Safe
-    await walletClient.sendTransaction({
-      account: account,
-      to: safeAddress as `0x${string}`,
-      value: BigInt(0.1 * 1e18),
-    });
+      const client = await protocolKit.getSafeProvider().getExternalSigner();
+      if (!client) {
+        return NextResponse.json(
+          { error: "Failed to get signer" },
+          { status: 500 }
+        );
+      }
+
+      const transactionHash = await client.sendTransaction({
+        to: deploymentTransaction.to as `0x${string}`,
+        value: BigInt(deploymentTransaction.value),
+        data: deploymentTransaction.data as `0x${string}`,
+        chain: customChain,
+      });
+
+      const publicClient = createPublicClient({
+        chain: customChain,
+        transport: http(),
+      });
+
+      const txReceipt = await publicClient.waitForTransactionReceipt({
+        hash: transactionHash,
+      });
+
+      // Fund Safe after deployment
+      await walletClient.sendTransaction({
+        account: account,
+        to: safeAddress as `0x${string}`,
+        value: BigInt(0.1 * 1e18), // Fund the Safe with 0.1 ETH (adjust as needed)
+      });
+
+      return NextResponse.json({
+        message: "Safe deployed and funded successfully",
+        safeAddress,
+        transactionHash,
+        txReceipt,
+      });
+    }
 
     return NextResponse.json({
-      message: "Safe deployed successfully",
+      message: "Safe is already deployed and funded",
       safeAddress,
-      transactionHash,
-      txReceipt,
     });
   } catch (error) {
     console.error("Error:", error);
     return NextResponse.json(
-      { error: "Internal Server Error", details: error },
+      { error: "Internal Server Error", details: error.message },
       { status: 500 }
     );
   }

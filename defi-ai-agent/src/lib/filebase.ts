@@ -21,3 +21,4 @@ export const uploadImageToIPFS = async (fileBuffer: Buffer | string): Promise<st
     }
 };
 
+

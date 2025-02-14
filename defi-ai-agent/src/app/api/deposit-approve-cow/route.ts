@@ -1,10 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// app/api/execute-safe-tx/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Safe from "@safe-global/protocol-kit";
 import {
     createPublicClient,
-    createWalletClient,
     defineChain,
     encodeFunctionData,
     http,
@@ -12,7 +9,7 @@ import {
 } from "viem";
 import { sepolia } from "viem/chains";
 import { OperationType, MetaTransactionData } from "@safe-global/types-kit";
-import {WETH_ABI} from "@/lib/abi";
+import { WETH_ABI } from "@/lib/abi";
 import {
     INPUT_AMOUNT,
     COWSWAP_GPv2VAULT_RELAYER_ADDRESS,
@@ -42,11 +39,7 @@ export async function POST(request: NextRequest) {
             transport: http(RPC_URL),
             chain: customChain,
         });
-        
-        const walletClient = createWalletClient({
-            transport: http(RPC_URL),
-            chain: customChain,
-        });
+
 
         const protocolKit = await Safe.init({
             provider: RPC_URL,
@@ -70,7 +63,7 @@ export async function POST(request: NextRequest) {
 
         const safeDepositTx: MetaTransactionData = {
             to: WETH_ADDRESS,
-            value: INPUT_AMOUNT,
+            value: INPUT_AMOUNT, // Convert BigInt to string
             data: callDataDeposit,
             operation: OperationType.Call,
         };
@@ -104,18 +97,22 @@ export async function POST(request: NextRequest) {
             hash: txResponse.hash as `0x${string}`,
         });
 
+        // Convert BigInt balance to string for response
+        const wethBalance = (await wethInstance.read.balanceOf([SAFE_ADDRESS]))?.toString();
+        const ethBalance = (await publicClient.getBalance({ 
+            address: SAFE_ADDRESS as `0x${string}` 
+        })).toString();
+
         return NextResponse.json({
             message: "Transaction executed successfully",
             transactionHash: txResponse.hash,
-            wethBalance: await wethInstance.read.balanceOf([SAFE_ADDRESS]),
-            ethBalance: await publicClient.getBalance({ 
-                address: SAFE_ADDRESS as `0x${string}` 
-            }),
+            wethBalance,  // WETH balance as string
+            ethBalance,   // ETH balance as string
         });
     } catch (error) {
         console.error("Error:", error);
         return NextResponse.json(
-            { error: "Internal Server Error", details: error },
+            { error: "Internal Server Error", details: error.message },
             { status: 500 }
         );
     }

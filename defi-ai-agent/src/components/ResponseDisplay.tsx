@@ -23,35 +23,35 @@ export default function ResponseDisplay({ response, type }: ResponseDisplayProps
   }
 
   // For swap type responses formatted as objects, we still use the card layout.
-  if (type === 'swap' && typeof response === 'object') {
-    return (
-      <div className="text-purple-100 space-y-4 p-4 bg-gray-800 rounded-lg shadow-md">
-        <div className="flex items-center gap-2">
-          <span className="text-purple-400 font-semibold">From:</span>
-          <span className="text-green-400">{response.fromToken}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-purple-400 font-semibold">To:</span>
-          <span className="text-green-400">{response.toToken}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-purple-400 font-semibold">Amount:</span>
-          <span className="text-green-400">{response.amount}</span>
-        </div>
-        {response.chain && (
-          <div className="flex items-center gap-2">
-            <span className="text-purple-400 font-semibold">Chain:</span>
-            <span className="text-green-400">{response.chain}</span>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // if (type === 'swap' && typeof response === 'object') {
+  //   return (
+  //     <div className="text-purple-100 space-y-4 p-4  rounded-lg shadow-md">
+  //       <div className="flex items-center gap-2">
+  //         <span className="text-purple-400 font-semibold">From:</span>
+  //         <span className="text-green-400">{response.fromToken}</span>
+  //       </div>
+  //       <div className="flex items-center gap-2">
+  //         <span className="text-purple-400 font-semibold">To:</span>
+  //         <span className="text-green-400">{response.toToken}</span>
+  //       </div>
+  //       <div className="flex items-center gap-2">
+  //         <span className="text-purple-400 font-semibold">Amount:</span>
+  //         <span className="text-green-400">{response.amount}</span>
+  //       </div>
+  //       {response.chain && (
+  //         <div className="flex items-center gap-2">
+  //           <span className="text-purple-400 font-semibold">Chain:</span>
+  //           <span className="text-green-400">{response.chain}</span>
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // }
 
   // For all other responses, we assume the response is a markdown-formatted string.
   // Using react-markdown provides a better UI with default styles from Tailwind Typography.
   return (
-    <div className="text-purple-100 p-4 bg-gray-800 rounded-lg shadow-md">
+    <div className="text-purple-100 p-4  rounded-lg">
       <ReactMarkdown
         className="prose prose-invert max-w-none"
         rehypePlugins={[rehypeRaw]}

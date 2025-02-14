@@ -1,4 +1,3 @@
-// app/api/execute-cow-trade/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import Safe from "@safe-global/protocol-kit";
 import {
@@ -22,6 +21,8 @@ import { JsonRpcProvider } from "@ethersproject/providers";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log({ body }); // Log the incoming request body for debugging
+
     const { 
       SAFE_ADDRESS, 
       SIGNER_PRIVATE_KEY, 
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
       sellAddress, 
       inputAmt 
     } = body;
+
     const RPC_URL = process.env.RPC_URL;
 
     if (!SAFE_ADDRESS || !SIGNER_PRIVATE_KEY || !RPC_URL) {
@@ -38,9 +40,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Log the addresses to verify they are correct
+    console.log('SAFE_ADDRESS:', SAFE_ADDRESS);
+    console.log('SIGNER_PRIVATE_KEY:', SIGNER_PRIVATE_KEY);
+    console.log('buyAddress:', buyAddress);
+    console.log('sellAddress:', sellAddress);
+
+    // Check if addresses are valid hex strings or not
+    if (!/^0x[a-fA-F0-9]{40}$/.test(buyAddress) || !/^0x[a-fA-F0-9]{40}$/.test(sellAddress)) {
+      return NextResponse.json(
+        { error: "Invalid address format. Expected a 0x-prefixed 40-character address" },
+        { status: 400 }
+      );
+    }
+
     const protocolKit = await Safe.init({
       provider: RPC_URL,
-      signer: SIGNER_PRIVATE_KEY,
+      signer: "b2fe90bc7a1d938fcd10e842dd73a53e18c5f81122be0cae9b15f491c4ec4ad0",
       safeAddress: SAFE_ADDRESS,
     });
 
@@ -61,7 +77,7 @@ export async function POST(request: NextRequest) {
       sellTokenDecimals: 18,
       buyToken: buyAddress,
       buyTokenDecimals: 18,
-      amount: inputAmt,
+      amount: String(Number(inputAmt) * 10 ** 18),
     };
 
     const advancedParameters: SwapAdvancedSettings = {

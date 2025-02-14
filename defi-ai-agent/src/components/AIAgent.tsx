@@ -30,8 +30,11 @@ type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
 export default function AIAgent() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<
-  Array<{ role: "user" | "assistant"; content: string | React.JSX.Element | object }>
->([]);
+    Array<{
+      role: "user" | "assistant";
+      content: string | React.JSX.Element | object;
+    }>
+  >([]);
 
   const [userInput, setUserInput] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("general");
@@ -41,8 +44,35 @@ export default function AIAgent() {
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
     null
   );
+  type SwapStep =
+    | "SETUP_CONFIRMATION"
+    | "AWAIT_DEPOSIT_APPROVAL"
+    | "AWAIT_SWAP_DETAILS"
+    | "CONFIRM_SWAP"
+    | "AWAIT_AMOUNT"
+    | "AWAIT_BUY_TOKEN"
+    | "AWAIT_SELL_TOKEN"
+    | "AWAIT_PRIVATE_KEY";
+
+  interface SwapDetails {
+    inputAmt?: string;
+    sellAddress?: string;
+    buyAddress?: string;
+    sellToken?: string;
+    buyToken?: string;
+  }
+
+  interface PendingSwap {
+    step: SwapStep;
+    details?: SwapDetails;
+  }
+
+  // State definitions
+  const [safeAddress, setSafeAddress] = useState<string | null>(null);
+  const [pendingSwap, setPendingSwap] = useState<PendingSwap | null>(null);
 
   const { isConnected, address } = useAccount();
+  const [privateKey, setPrivateKey] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (!isConnected && activeTab !== "general") {
@@ -141,13 +171,278 @@ export default function AIAgent() {
           }
           break;
 
-        case "swap":
-          response = await fetch("/api/swap", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: currentInput }),
-          });
+        case "swap": {
+          try {
+            // New user without Safe - Initial interaction
+            if (!privateKey) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content:
+                    "To proceed with the swap, I'll need your private key. Please enter it now:",
+                },
+              ]);
+              setPendingSwap({ step: "AWAIT_PRIVATE_KEY" });
+              return;
+            }
+
+            // Handle private key input
+            if (pendingSwap?.step === "AWAIT_PRIVATE_KEY") {
+              const inputKey = currentInput.trim();
+
+              // Basic validation - check if it's a valid hex string of appropriate length
+              if (!/^0x[0-9a-fA-F]{64}$/.test(inputKey)) {
+                throw new Error(
+                  "Invalid private key format. Please provide a valid private key."
+                );
+              }
+
+              setPrivateKey(inputKey);
+
+              // Proceed to next step - check for Safe wallet
+              if (!safeAddress) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "assistant",
+                    content:
+                      "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+                  },
+                ]);
+                setPendingSwap({ step: "SETUP_CONFIRMATION" });
+                return;
+              }
+            }
+            if (!safeAddress && !pendingSwap) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content:
+                    "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+                },
+              ]);
+
+              setPendingSwap({ step: "SETUP_CONFIRMATION" });
+              return;
+            }
+
+            // User confirmed Safe setup
+            if (
+              !safeAddress &&
+              pendingSwap?.step === "SETUP_CONFIRMATION" &&
+              isConfirmation(currentInput)
+            ) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: "Creating your Safe wallet now...",
+                },
+              ]);
+
+              const safeResponse = await fetch("/api/setup-safe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  SIGNER_PRIVATE_KEY: privateKey,
+                }),
+              });
+
+              if (safeResponse.status === 500) {
+                const err = await safeResponse.json();
+                console.log({ err });
+                throw new Error(err?.details || "Error creating");
+              }
+
+              const { safeAddress: newSafeAddress } = await safeResponse.json();
+              setSafeAddress(newSafeAddress);
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Great! I've created your Safe wallet at ${newSafeAddress}. Before we can swap, we need to deposit some ETH and approve it for trading. Should I proceed with that?`,
+                },
+              ]);
+
+              setPendingSwap({ step: "AWAIT_DEPOSIT_APPROVAL" });
+              return;
+            }
+
+            // User confirmed deposit and approve
+            if (
+              pendingSwap?.step === "AWAIT_DEPOSIT_APPROVAL" &&
+              isConfirmation(currentInput)
+            ) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: "Processing deposit and approval...",
+                },
+              ]);
+
+              const approveResponse = await fetch("/api/deposit-approve-cow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  SAFE_ADDRESS: safeAddress,
+                  SIGNER_PRIVATE_KEY: privateKey,
+                }),
+              });
+
+              if (!approveResponse.ok)
+                throw new Error("Failed to execute deposit and approval");
+
+              const { transactionHash, wethBalance, ethBalance } =
+                await approveResponse.json();
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Perfect! The deposit and approval are complete (tx: ${transactionHash}). Your balances are: ${ethBalance} ETH and ${wethBalance} WETH. Which token would you like to swap from? (e.g., WETH)`,
+                },
+              ]);
+
+              setPendingSwap({
+                step: "AWAIT_SELL_TOKEN",
+                details: {},
+              });
+              return;
+            }
+
+            // User provided sell token
+            if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
+              const sellToken = currentInput.trim().toUpperCase();
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Got it, you want to swap from ${sellToken}. Which token would you like to swap to?`,
+                },
+              ]);
+
+              setPendingSwap({
+                step: "AWAIT_BUY_TOKEN",
+                details: {
+                  ...pendingSwap.details,
+                  sellToken,
+                },
+              });
+              return;
+            }
+
+            // User provided buy token
+            if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
+              const buyToken = currentInput.trim().toUpperCase();
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Great, you want to swap from ${pendingSwap?.details?.sellToken} to ${buyToken}. How much ${pendingSwap?.details?.sellToken} would you like to swap? (Enter amount)`,
+                },
+              ]);
+
+              setPendingSwap({
+                step: "AWAIT_AMOUNT",
+                details: {
+                  ...pendingSwap.details,
+                  buyToken,
+                },
+              });
+              return;
+            }
+
+            // User provided amount
+            if (pendingSwap?.step === "AWAIT_AMOUNT") {
+              const amount = currentInput.trim();
+              const { sellToken, buyToken } = pendingSwap?.details;
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `To confirm: You want to swap ${amount} ${sellToken} for ${buyToken}. Would you like to proceed with the swap?`,
+                },
+              ]);
+
+              setPendingSwap({
+                step: "CONFIRM_SWAP",
+                details: {
+                  inputAmt: amount,
+                  sellAddress: sellToken, // You'll need to define these addresses
+                  buyAddress: buyToken,
+                  sellToken,
+                  buyToken,
+                },
+              });
+              return;
+            }
+
+            // Execute final swap
+            if (
+              pendingSwap?.step === "CONFIRM_SWAP" &&
+              isConfirmation(currentInput)
+            ) {
+              const { details } = pendingSwap;
+
+              console.log(safeAddress, privateKey, details);
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: "Executing your swap...",
+                },
+              ]);
+
+              const swapResponse = await fetch("/api/swap-cow", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  SAFE_ADDRESS: safeAddress,
+                  SIGNER_PRIVATE_KEY: privateKey,
+                  buyAddress: details?.buyAddress,
+                  sellAddress: details?.sellAddress,
+                  inputAmt: details?.inputAmt,
+                }),
+              });
+
+              if (!swapResponse.ok) throw new Error("Failed to execute swap");
+
+              const { transactionHash } = await swapResponse.json();
+
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `Great news! Your swap is complete. You can view the transaction here: ${transactionHash}`,
+                },
+              ]);
+
+              setPendingSwap(null);
+            }
+          } catch (error) {
+            console.error("Swap error:", error);
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: `I apologize, but there was an error: ${error.message}. Would you like to try again?`,
+              },
+            ]);
+            setError(error.message);
+            setPendingSwap(null);
+          } finally {
+            setLoading(false);
+          }
           break;
+        }
 
         case "lend":
           response = await fetch("/api/lending", {
@@ -171,7 +466,7 @@ export default function AIAgent() {
           break;
       }
 
-      const data = await response.json();
+      const data = await response?.json();
       console.log({ data });
 
       if (data.error) {
