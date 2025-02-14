@@ -5,7 +5,7 @@ const filebaseClientImage = new FilebaseClient({
     token: process.env.NEXT_PUBLIC_FILEBASE_API_KEY
 });
 
-export const uploadImageToIPFS = async (fileBuffer: Buffer): Promise<string | null> => {
+export const uploadImageToIPFS = async (fileBuffer: Buffer | string): Promise<string | null> => {
     try {
 
         const content = new Blob([fileBuffer]);

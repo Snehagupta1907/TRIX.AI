@@ -30,14 +30,19 @@ type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
 export default function AIAgent() {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<
-    Array<{ role: "user" | "assistant"; content: string }>
-  >([]);
+  Array<{ role: "user" | "assistant"; content: string | React.JSX.Element | object }>
+>([]);
+
   const [userInput, setUserInput] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("general");
   const [selectedChain, setSelectedChain] = useState<Chain>("arbitrum");
   const [error, setError] = useState("");
+  // NEW: State to hold the NFT data waiting for confirmation
+  const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
+    null
+  );
 
-  const { isConnected,address } = useAccount();
+  const { isConnected, address } = useAccount();
 
   React.useEffect(() => {
     if (!isConnected && activeTab !== "general") {
@@ -45,79 +50,140 @@ export default function AIAgent() {
     }
   }, [isConnected, activeTab]);
 
+  // Helper function to check for confirmation phrases
+  const isConfirmation = (text: string) => {
+    const confirmations = [
+      "yes",
+      "sure",
+      "why not",
+      "go ahead",
+      "mint",
+      "confirm",
+    ];
+    return confirmations.some((phrase) => text.toLowerCase().includes(phrase));
+  };
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!userInput.trim()) return;
     setError("");
     setLoading(true);
 
-    setMessages((prev) => [...prev, { role: "user", content: userInput }]);
+    // Append the user's message to the conversation
     const currentInput = userInput;
+    setMessages((prev) => [...prev, { role: "user", content: currentInput }]);
     setUserInput("");
 
     try {
       let response;
-      
-      // Use different endpoints based on active tab
+
       switch (activeTab) {
         case "mint":
           if (!address) {
             setError("Wallet must be connected to mint an NFT.");
+            setLoading(false);
             return;
           }
-          const tokenUri = await generateImage(formatNftPrompt(currentInput));
-      
-          console.log(tokenUri);
-          const requestBody = { WALLET_ADDRESS: address, TOKEN_URI: tokenUri };
-          response = await fetch("/api/nft", {
+
+          // If we already generated an NFT and are waiting for confirmation…
+          if (pendingNFT) {
+            if (isConfirmation(currentInput)) {
+              // User confirmed; proceed with minting the NFT
+              const requestBody = {
+                WALLET_ADDRESS: address,
+                TOKEN_URI: pendingNFT.nftIpfsUrl,
+              };
+              response = await fetch("/api/nft", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody),
+              });
+              // Clear the pending NFT after minting
+              setPendingNFT(null);
+            } else {
+              // No confirmation detected: cancel minting
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content:
+                    "Minting cancelled. If you want to mint, please generate a new NFT image.",
+                },
+              ]);
+              setPendingNFT(null);
+              setLoading(false);
+              return;
+            }
+          } else {
+            // No pending NFT – generate the NFT image and ask for confirmation
+            const tokenUri = await generateImage(formatNftPrompt(currentInput));
+            console.log(tokenUri);
+            if (tokenUri?.nftIpfsUrl) {
+              setPendingNFT({ nftIpfsUrl: tokenUri.nftIpfsUrl });
+            } else {
+              setError("Error generating NFT image.");
+              setLoading(false);
+              return;
+            }
+
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: {
+                  text: "Here is your generated image:",
+                  imageSrc: tokenUri?.img, // Store the image URL separately
+                },
+              },
+            ]);
+            setLoading(false);
+            return; // wait for the user's confirmation response
+          }
+          break;
+
+        case "swap":
+          response = await fetch("/api/swap", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(requestBody),
-          });
-          break;
-        case 'swap':
-          response = await fetch('/api/swap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text: currentInput }),
           });
           break;
-          
-        case 'lend':
-          response = await fetch('/api/lending', {
-            method: 'GET',
+
+        case "lend":
+          response = await fetch("/api/lending", {
+            method: "GET",
           });
           break;
-          
-        case 'trade':
-          response = await fetch('/api/trade', {
-            method: 'GET',
+
+        case "trade":
+          response = await fetch("/api/trade", {
+            method: "GET",
           });
           break;
-          
-        case 'general':
+
+        case "general":
         default:
-          response = await fetch('/api/general', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          response = await fetch("/api/general", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: currentInput }),
           });
           break;
       }
 
       const data = await response.json();
-
-      console.log({data})
+      console.log({ data });
 
       if (data.error) {
         setError(data.error);
-        setMessages(prev => [...prev, { 
-          role: 'assistant', 
-          content: `Error: ${data.error}` 
-        }]);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: `Error: ${data.error}` },
+        ]);
         return;
       }
 
+      // For minting, you might want to extract and show the transaction link from data.data
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: data.data },
@@ -145,24 +211,11 @@ export default function AIAgent() {
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
   ];
 
-  const visibleTabs = isConnected ? tabs : tabs.filter(tab => tab.id === 'general');
+  const visibleTabs = isConnected
+    ? tabs
+    : tabs.filter((tab) => tab.id === "general");
 
   const chains = [{ id: "arbitrum", label: "Arbitrum" }];
-
-  // const getPlaceholderText = () => {
-  //   if (!isConnected) return "Connect your wallet to access DeFi features, or ask general questions";
-    
-  //   switch (activeTab) {
-  //     case 'swap':
-  //       return "e.g., 'Swap 0.1 ETH to USDC with best rate'";
-  //     case 'lend':
-  //       return "Ask about current lending opportunities and rates";
-  //     case 'trade':
-  //       return "Ask about trading opportunities and market analysis";
-  //     default:
-  //       return "How can I help you with your DeFi needs?";
-  //   }
-  // };
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
@@ -175,7 +228,7 @@ export default function AIAgent() {
           </h1>
           <ConnectButton />
         </div>
-        
+
         {isConnected && (
           <div className="my-6">
             <label className="block text-sm font-medium text-purple-300 mb-2">
@@ -198,7 +251,7 @@ export default function AIAgent() {
             </Select>
           </div>
         )}
-        
+
         <div className="space-y-2">
           {visibleTabs.map((tab) => (
             <button
@@ -285,7 +338,6 @@ export default function AIAgent() {
             >
               <Send size={20} />
             </button>
-          
           </form>
         </div>
       </div>

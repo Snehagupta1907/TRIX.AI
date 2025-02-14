@@ -10,6 +10,16 @@ interface ResponseDisplayProps {
 export default function ResponseDisplay({ response, type }: ResponseDisplayProps) {
   if (!response) return null;
 
+  if (response.imageSrc) {
+    return (
+      <>
+        <p className='text-purple-300'>{response.text}</p>
+        <img src={response.imageSrc} alt="Generated NFT" className="w-32 h-32 mt-2" />
+        <p className='text-purple-300 mt-2'>Do you want to mint this image as a NFT</p>
+      </>
+    );
+  }
+
   const formatResponse = (content: any) => {
     if (typeof content === 'object') {
       return JSON.stringify(content, null, 2);
