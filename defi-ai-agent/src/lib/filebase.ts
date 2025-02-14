@@ -1,8 +1,9 @@
+"use server"
 import { FilebaseClient } from "@filebase/client";
 
 const GATEWAY = "ipfs.filebase.io";
 const filebaseClientImage = new FilebaseClient({
-    token: process.env.NEXT_PUBLIC_FILEBASE_API_KEY
+    token: process.env.FILEBASE_API_KEY
 });
 
 export const uploadImageToIPFS = async (fileBuffer: Buffer | string): Promise<string | null> => {
