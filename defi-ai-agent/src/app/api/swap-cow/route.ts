@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     const protocolKit = await Safe.init({
       provider: RPC_URL,
-      signer: "b2fe90bc7a1d938fcd10e842dd73a53e18c5f81122be0cae9b15f491c4ec4ad0",
+      signer: SIGNER_PRIVATE_KEY,
       safeAddress: SAFE_ADDRESS,
     });
 
