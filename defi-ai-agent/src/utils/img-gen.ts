@@ -42,9 +42,19 @@ export const generateImage = async (prompt: string): Promise<string | null> => {
 
         // Upload the image buffer to IPFS
         const ipfsUrl = await uploadImageToIPFS(imageBuffer);
-        console.log("Uploaded Image to IPFS:", ipfsUrl);
-
-        return ipfsUrl;
+        const nftObj={
+            name: "AI-NFT",
+            image: ipfsUrl,
+            attributes: [{
+                "trait_type": "type",
+                "value": "Ai Minted NFT"
+            }]
+        }
+        // Upload the NFT object to IPFS
+        console.log("NFT Object:", nftObj);
+        const nftObjBuffer = JSON.stringify(nftObj);
+        const nftIpfsUrl = await uploadImageToIPFS(nftObjBuffer);
+        return nftIpfsUrl;
     } catch (error: any) {
         console.error("Error generating image:", error.response?.data || error.message);
         throw error
