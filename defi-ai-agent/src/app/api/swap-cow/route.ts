@@ -48,12 +48,12 @@ export async function POST(request: NextRequest) {
     console.log('sellAddress:', sellAddress);
 
     // Check if addresses are valid hex strings or not
-    if (!/^0x[a-fA-F0-9]{40}$/.test(buyAddress) || !/^0x[a-fA-F0-9]{40}$/.test(sellAddress)) {
-      return NextResponse.json(
-        { error: "Invalid address format. Expected a 0x-prefixed 40-character address" },
-        { status: 400 }
-      );
-    }
+    // if (!/^0x[a-fA-F0-9]{40}$/.test(buyAddress) || !/^0x[a-fA-F0-9]{40}$/.test(sellAddress)) {
+    //   return NextResponse.json(
+    //     { error: "Invalid address format. Expected a 0x-prefixed 40-character address" },
+    //     { status: 400 }
+    //   );
+    // }
 
     const protocolKit = await Safe.init({
       provider: RPC_URL,

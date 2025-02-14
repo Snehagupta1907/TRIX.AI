@@ -315,7 +315,7 @@ export default function AIAgent() {
 
             // User provided sell token
             if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
-              const sellToken = currentInput.trim().toUpperCase();
+              const sellToken = currentInput.trim();
 
               setMessages((prev) => [
                 ...prev,
@@ -337,7 +337,7 @@ export default function AIAgent() {
 
             // User provided buy token
             if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
-              const buyToken = currentInput.trim().toUpperCase();
+              const buyToken = currentInput.trim();
 
               setMessages((prev) => [
                 ...prev,
@@ -376,8 +376,6 @@ export default function AIAgent() {
                   inputAmt: amount,
                   sellAddress: sellToken, // You'll need to define these addresses
                   buyAddress: buyToken,
-                  sellToken,
-                  buyToken,
                 },
               });
               return;
