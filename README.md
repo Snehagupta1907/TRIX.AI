@@ -31,6 +31,10 @@ This project aims to bridge the gap between traditional users and the complex wo
 
 ---
 
+## 🛠 Deployment 
+https://explorer.sepolia.mantle.xyz/tx/0x4359bd4e389b7eaec92097f55a89241a61848bf483f94eed84724df618e1bb0f
+
+
 ## 🛠 Installation & Setup
 
 ### Prerequisites

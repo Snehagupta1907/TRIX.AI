@@ -17,6 +17,7 @@ import {
 } from "@cowprotocol/cow-sdk";
 import { VoidSigner } from "@ethersproject/abstract-signer";
 import { JsonRpcProvider } from "@ethersproject/providers";
+import { COW_ADDRESS, WETH_ADDRESS } from "@/lib/constants";
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,12 +48,12 @@ export async function POST(request: NextRequest) {
     console.log('sellAddress:', sellAddress);
 
     // Check if addresses are valid hex strings or not
-    if (!/^0x[a-fA-F0-9]{40}$/.test(buyAddress) || !/^0x[a-fA-F0-9]{40}$/.test(sellAddress)) {
-      return NextResponse.json(
-        { error: "Invalid address format. Expected a 0x-prefixed 40-character address" },
-        { status: 400 }
-      );
-    }
+    // if (!/^0x[a-fA-F0-9]{40}$/.test(buyAddress) || !/^0x[a-fA-F0-9]{40}$/.test(sellAddress)) {
+    //   return NextResponse.json(
+    //     { error: "Invalid address format. Expected a 0x-prefixed 40-character address" },
+    //     { status: 400 }
+    //   );
+    // }
 
     const protocolKit = await Safe.init({
       provider: RPC_URL,
@@ -73,9 +74,9 @@ export async function POST(request: NextRequest) {
     const sdk = new TradingSdk(traderParams, { enableLogging: false });
     const parameters: TradeParameters = {
       kind: OrderKind.SELL,
-      sellToken: sellAddress,
+      sellToken: WETH_ADDRESS,
       sellTokenDecimals: 18,
-      buyToken: buyAddress,
+      buyToken: COW_ADDRESS,
       buyTokenDecimals: 18,
       amount: String(Number(inputAmt) * 10 ** 18),
     };

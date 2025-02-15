@@ -93,6 +93,8 @@ export default function AIAgent() {
     return confirmations.some((phrase) => text.toLowerCase().includes(phrase));
   };
 
+  console.log(pendingSwap, safeAddress, privateKey);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     if (!userInput.trim()) return;
@@ -101,6 +103,7 @@ export default function AIAgent() {
 
     // Append the user's message to the conversation
     const currentInput = userInput;
+    console.log(currentInput);
     setMessages((prev) => [...prev, { role: "user", content: currentInput }]);
     setUserInput("");
 
@@ -190,30 +193,26 @@ export default function AIAgent() {
             // Handle private key input
             if (pendingSwap?.step === "AWAIT_PRIVATE_KEY") {
               const inputKey = currentInput.trim();
-
-              // Basic validation - check if it's a valid hex string of appropriate length
-              if (!/^0x[0-9a-fA-F]{64}$/.test(inputKey)) {
-                throw new Error(
-                  "Invalid private key format. Please provide a valid private key."
-                );
-              }
+              console.log("Input Private Key:", inputKey);
 
               setPrivateKey(inputKey);
 
-              // Proceed to next step - check for Safe wallet
-              if (!safeAddress) {
-                setMessages((prev) => [
-                  ...prev,
-                  {
-                    role: "assistant",
-                    content:
-                      "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
-                  },
-                ]);
-                setPendingSwap({ step: "SETUP_CONFIRMATION" });
-                return;
-              }
+              // Ensure state has updated before proceeding
+              setTimeout(() => {
+                if (!safeAddress) {
+                  setMessages((prev) => [
+                    ...prev,
+                    {
+                      role: "assistant",
+                      content:
+                        "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+                    },
+                  ]);
+                  setPendingSwap({ step: "SETUP_CONFIRMATION" });
+                }
+              }, 100); // Adjust timeout as needed
             }
+
             if (!safeAddress && !pendingSwap) {
               setMessages((prev) => [
                 ...prev,
@@ -316,7 +315,7 @@ export default function AIAgent() {
 
             // User provided sell token
             if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
-              const sellToken = currentInput.trim().toUpperCase();
+              const sellToken = currentInput.trim();
 
               setMessages((prev) => [
                 ...prev,
@@ -338,7 +337,7 @@ export default function AIAgent() {
 
             // User provided buy token
             if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
-              const buyToken = currentInput.trim().toUpperCase();
+              const buyToken = currentInput.trim();
 
               setMessages((prev) => [
                 ...prev,
@@ -377,8 +376,6 @@ export default function AIAgent() {
                   inputAmt: amount,
                   sellAddress: sellToken, // You'll need to define these addresses
                   buyAddress: buyToken,
-                  sellToken,
-                  buyToken,
                 },
               });
               return;
