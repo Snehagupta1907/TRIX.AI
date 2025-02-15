@@ -510,7 +510,10 @@ export default function AIAgent() {
     ? tabs
     : tabs.filter((tab) => tab.id === "general");
 
-  const chains = [{ id: "arbitrum", label: "Arbitrum" }];
+  const chains = [
+    { id: "arbitrum", label: "Arbitrum" },
+    { id: "mantle-sepolia", label: "Mantle Sepolia" },
+  ];
 
   return (
     <div className="flex h-screen bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
