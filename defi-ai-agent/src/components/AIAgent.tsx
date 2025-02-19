@@ -2,18 +2,20 @@
 import React, { useState, KeyboardEvent } from "react";
 import { useAccount } from "wagmi";
 import {
-  Loader,
-  BrainCircuit,
-  ArrowRightLeft,
   PiggyBank,
   LineChart,
   Send,
-  Rocket,
   ImagePlay,
+  Loader, 
+  BrainCircuit,
+  RefreshCw,
+  Sparkles,
+  ArrowRightLeft,
+  User,
+  Bot
 } from "lucide-react";
 import ResponseDisplay from "./ResponseDisplay";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   Select,
   SelectContent,
@@ -23,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import { generateImage } from "@/utils/img-gen";
 import { formatNftPrompt } from "@/utils/prompt";
+import { CustomConnect } from "./CustomConnect";
 
 type TabType = "general" | "swap" | "lend" | "trade" | "mint";
 type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
@@ -360,7 +363,7 @@ export default function AIAgent() {
             // User provided amount
             if (pendingSwap?.step === "AWAIT_AMOUNT") {
               const amount = currentInput.trim();
-              const { sellToken, buyToken } = pendingSwap?.details;
+              const { sellToken, buyToken } = pendingSwap?.details || {};
 
               setMessages((prev) => [
                 ...prev,
@@ -430,10 +433,14 @@ export default function AIAgent() {
               ...prev,
               {
                 role: "assistant",
-                content: `I apologize, but there was an error: ${error.message}. Would you like to try again?`,
+                content: `I apologize, but there was an error: ${error instanceof Error ? error.message : 'Unknown error'}. Would you like to try again?`,
               },
             ]);
-            setError(error.message);
+            if (error instanceof Error) {
+              setError(error.message);
+            } else {
+              setError("An unknown error occurred.");
+            }
             setPendingSwap(null);
           } finally {
             setLoading(false);
@@ -512,33 +519,60 @@ export default function AIAgent() {
     { id: "mantle-sepolia", label: "Mantle Sepolia" },
   ];
 
+  const StarField = () => {
+    return (
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute inset-0 bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+        {Array.from({ length: 50 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              width: `${Math.random() * 2 + 1}px`,
+              height: `${Math.random() * 2 + 1}px`,
+              opacity: Math.random() * 0.7,
+              animation: `twinkle ${Math.random() * 5 + 5}s linear infinite`,
+              animationDelay: `${Math.random() * 5}s`
+            }}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <div className="flex h-screen bg-[#0a0a0a] bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]">
-      {/* Sidebar */}
-      <div className="w-64 bg-black/40 backdrop-blur-xl p-4 flex flex-col border-r border-purple-500/10">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 flex items-center gap-2 mb-2">
-            <Rocket className="text-purple-500" size={24} />
-            Trix
+    <div className="flex h-screen relative overflow-hidden font-sans">
+      <StarField />
+      
+      {/* Sidebar with glass morphism */}
+      <div className="w-72 bg-black/40 backdrop-blur-xl p-6 flex flex-col border-r border-gray-500/20 z-10 shadow-xl">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-200 to-gray-400 flex items-center gap-3 mb-4">
+            <Bot className="text-gray-100" size={28} />
+            Trix AI
           </h1>
-          <ConnectButton />
+          <div className="transform transition-all duration-300 hover:scale-105">
+            <CustomConnect />
+          </div>
         </div>
 
         {isConnected && (
-          <div className="my-6">
-            <label className="block text-sm font-medium text-purple-300 mb-2">
-              Select Chain
+          <div className="my-6 bg-gray-900/10 p-4 rounded-xl border border-gray-500/20">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+             Choose Network
             </label>
             <Select
               value={selectedChain}
               onValueChange={(value: Chain) => setSelectedChain(value)}
             >
-              <SelectTrigger className="w-full bg-black/50 text-white border-purple-500/20">
+              <SelectTrigger className="w-full bg-black/50 text-white border-gray-500/20">
                 <SelectValue placeholder="Select chain" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-gray-900 border-gray-500/20">
                 {chains.map((chain) => (
-                  <SelectItem key={chain.id} value={chain.id}>
+                  <SelectItem key={chain.id} value={chain.id} className="text-gray-100">
                     {chain.label}
                   </SelectItem>
                 ))}
@@ -547,65 +581,114 @@ export default function AIAgent() {
           </div>
         )}
 
-        <div className="space-y-2">
+        <div className="space-y-2 flex-1">
+          <h3 className="text-xs uppercase text-gray-400/70 mb-3 font-semibold tracking-wider">Features</h3>
           {visibleTabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
                 activeTab === tab.id
-                  ? "bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-white border border-purple-500/20"
-                  : "text-purple-300 hover:bg-purple-500/10"
+                  ? "bg-gradient-to-r from-gray-500/20 to-black/20 text-white border border-gray-500/20 shadow-lg shadow-gray-500/5"
+                  : "text-gray-300 hover:bg-gray-500/10"
               }`}
             >
               {tab.icon}
-              {tab.label}
+              <span className="font-medium">{tab.label}</span>
             </button>
           ))}
+        </div>
+        
+        <div className="mt-auto pt-4 border-t border-gray-500/10 text-xs text-gray-400/60 flex items-center gap-2">
+          <RefreshCw size={12} />
+          <span>Updated Feb 19, 2025</span>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${
-                message.role === "assistant"
-                  ? "bg-black/40 backdrop-blur-sm border border-purple-500/10"
-                  : "bg-purple-500/10 backdrop-blur-sm"
-              } p-4 rounded-lg`}
-            >
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mr-4">
-                {message.role === "assistant" ? (
-                  <BrainCircuit className="text-purple-400" />
-                ) : (
-                  <div className="bg-gradient-to-r from-purple-400 to-pink-600 rounded-full w-8 h-8" />
-                )}
-              </div>
-              <div className="flex-1">
-                <ResponseDisplay response={message.content} type={activeTab} />
-              </div>
+      <div className="flex-1 flex flex-col bg-gradient-to-b from-black/60 to-gray-900/10 backdrop-blur-md">
+        {messages.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center p-8">
+            <div className="rounded-full bg-gray-500/10 p-6 mb-6">
+              <BrainCircuit className="text-gray-400" size={48} />
             </div>
-          ))}
-          {loading && (
-            <div className="flex items-center justify-center">
-              <Loader className="animate-spin text-purple-500" size={24} />
+            <h2 className="text-2xl font-semibold text-gray-100 mb-3">Trix AI Assistant</h2>
+            <p className="text-gray-300 text-center max-w-md mb-8">
+              Your personal crypto and DeFi guide. Ask me anything about tokens, trading, NFTs, or general questions.
+            </p>
+            <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
+              {["Tell me about DeFi yield strategies", "How to swap ETH to USDC efficiently?", 
+                "Generate an NFT with cosmic theme", "Analyze ETH price trend"].map((suggestion, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setUserInput(suggestion);
+                  }}
+                  className="bg-gray-500/10 hover:bg-gray-500/20 text-gray-200 p-4 rounded-xl border border-gray-500/10 text-left transition-all duration-200 hover:border-gray-500/30"
+                >
+                  {suggestion}
+                </button>
+              ))}
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-500/20">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`flex max-w-5xl mx-auto ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
+              >
+                <div
+                  className={`flex max-w-4xl ${
+                    message.role === "assistant"
+                      ? "bg-[#212121] backdrop-blur-sm border border-gray-500/10"
+                      : "bg-gray-700 text-black backdrop-blur-sm"
+                  } p-5 rounded-2xl ${message.role === "assistant" ? "rounded-tl-sm" : "rounded-tr-sm"} shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${
+                    message.role === "assistant" 
+                      ? "bg-gradient-to-r from-indigo-500 to-gray-600"
+                      : "bg-gradient-to-r from-pink-300 to-gray-500"
+                  }`}>
+                    {message.role === "assistant" ? (
+                      <BrainCircuit className="text-white" size={18} />
+                    ) : (
+                      <User className="text-white" size={18} />
+                    )}
+                  </div>
+                  <div className="flex-1 w-full">
+                    <ResponseDisplay response={message.content}  />
+                  </div>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex max-w-4xl mx-auto">
+                <div className="flex max-w-xl bg-[#212121] backdrop-blur-sm border border-gray-500/10 p-5 rounded-2xl rounded-tl-sm">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-gray-600 flex items-center justify-center mr-4 flex-shrink-0">
+                    <BrainCircuit className="text-white" size={18} />
+                  </div>
+                  <ResponseDisplay 
+                    response={null} 
+                  
+                    isLoading={true} 
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-        <div className="border-t border-purple-500/10 p-4 bg-black/40 backdrop-blur-xl">
-          <form onSubmit={handleSubmit} className="flex items-end gap-4">
-            <div className="flex-1">
+        <div className="border-t border-gray-500/10 p-6 bg-black/60 backdrop-blur-xl">
+          <form onSubmit={handleSubmit} className="flex items-end gap-4 max-w-5xl mx-auto relative">
+            <div className="flex-1 relative">
               <textarea
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
                   !isConnected
-                    ? "Connect your wallet to access DeFi features, or ask general questions"
+                    ? "Connect your wallet or ask general questions..."
                     : activeTab === "swap"
                     ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
                     : activeTab === "lend"
@@ -613,13 +696,20 @@ export default function AIAgent() {
                     : activeTab === "trade"
                     ? "e.g., 'Analyze ETH/USDC trading opportunities'"
                     : activeTab === "mint"
-                    ? "e.g., 'Mint NFT with my artwork'"
+                    ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
                     : "Ask me anything..."
                 }
-                className="w-full h-24 bg-black/50 border border-purple-500/20 rounded-lg p-4 text-purple-100 placeholder-purple-500/50 focus:ring-2 focus:ring-purple-500/50 focus:border-transparent resize-none"
+                className="w-full bg-black/50 border border-gray-500/20 rounded-2xl p-4 pb-12 text-gray-100 placeholder-gray-500/50 focus:ring-2 focus:ring-gray-500/50 focus:border-transparent resize-none h-24 transition-all duration-200 focus:shadow-lg focus:shadow-gray-500/10"
               />
               {error && (
-                <div className="text-red-400 text-sm mt-2">{error}</div>
+                <div className="absolute bottom-3 left-4 text-red-400 text-sm">{error}</div>
+              )}
+              
+              {messages.length > 0 && !loading && (
+                <div className="absolute bottom-3 left-4 text-gray-400/70 text-xs flex items-center gap-1">
+                  <Sparkles size={12} />
+                  <span>Trix is ready to assist</span>
+                </div>
               )}
             </div>
             <button
@@ -629,9 +719,9 @@ export default function AIAgent() {
                 (!isConnected && activeTab !== "general") ||
                 !userInput.trim()
               }
-              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 disabled:from-gray-600 disabled:to-gray-700 text-white p-4 rounded-lg flex items-center justify-center transition-all duration-200 mb-2"
+              className="bg-gradient-to-r from-gray-500 to-white hover:from-gray-600 hover:to-gray-400 disabled:from-gray-600 disabled:to-gray-700 text-white p-4 rounded-xl flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-gray-500/20 disabled:shadow-none h-12 w-12 mb-2"
             >
-              <Send size={20} />
+              {loading ? <Loader size={20} className="animate-spin" /> : <Send size={18} color="black" />}
             </button>
           </form>
         </div>
