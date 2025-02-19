@@ -21,7 +21,7 @@ export const CustomConnect = () => {
     borderColor: '#555',
   };
 
-  const [hoveredButton, setHoveredButton] = React.useState(null);
+  const [hoveredButton, setHoveredButton] = React.useState<string | null>(null);
 
   return (
     <ConnectButton.Custom>

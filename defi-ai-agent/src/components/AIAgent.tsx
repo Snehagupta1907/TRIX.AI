@@ -1,24 +1,21 @@
 "use client";
-import React, { useState, KeyboardEvent, useEffect } from "react";
+import React, { useState, KeyboardEvent } from "react";
 import { useAccount } from "wagmi";
 import {
   PiggyBank,
   LineChart,
   Send,
   ImagePlay,
-  Rocket, 
   Loader, 
   BrainCircuit,
   RefreshCw,
   Sparkles,
   ArrowRightLeft,
   User,
-  Terminal,
   Bot
 } from "lucide-react";
 import ResponseDisplay from "./ResponseDisplay";
 
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import {
   Select,
   SelectContent,
@@ -79,18 +76,6 @@ export default function AIAgent() {
 
   const { isConnected, address } = useAccount();
   const [privateKey, setPrivateKey] = useState<string | null>(null);
-
-  const [thinkingStage, setThinkingStage] = useState(0);
-  
-  // Simulate thinking stages for more interactive experience
-  useEffect(() => {
-    if (loading) {
-      const interval = setInterval(() => {
-        setThinkingStage(prev => (prev + 1) % 3);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading]);
 
   React.useEffect(() => {
     if (!isConnected && activeTab !== "general") {
@@ -378,7 +363,7 @@ export default function AIAgent() {
             // User provided amount
             if (pendingSwap?.step === "AWAIT_AMOUNT") {
               const amount = currentInput.trim();
-              const { sellToken, buyToken } = pendingSwap?.details;
+              const { sellToken, buyToken } = pendingSwap?.details || {};
 
               setMessages((prev) => [
                 ...prev,
@@ -448,10 +433,14 @@ export default function AIAgent() {
               ...prev,
               {
                 role: "assistant",
-                content: `I apologize, but there was an error: ${error.message}. Would you like to try again?`,
+                content: `I apologize, but there was an error: ${error instanceof Error ? error.message : 'Unknown error'}. Would you like to try again?`,
               },
             ]);
-            setError(error.message);
+            if (error instanceof Error) {
+              setError(error.message);
+            } else {
+              setError("An unknown error occurred.");
+            }
             setPendingSwap(null);
           } finally {
             setLoading(false);
@@ -668,7 +657,7 @@ export default function AIAgent() {
                     )}
                   </div>
                   <div className="flex-1 w-full">
-                    <ResponseDisplay response={message.content} type={activeTab} />
+                    <ResponseDisplay response={message.content}  />
                   </div>
                 </div>
               </div>
@@ -681,7 +670,7 @@ export default function AIAgent() {
                   </div>
                   <ResponseDisplay 
                     response={null} 
-                    type={activeTab} 
+                  
                     isLoading={true} 
                   />
                 </div>

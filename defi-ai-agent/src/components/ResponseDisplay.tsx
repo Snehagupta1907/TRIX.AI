@@ -1,15 +1,15 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
-import { CircleOff, BrainCircuit, Loader } from 'lucide-react';
+import { CircleOff, BrainCircuit } from 'lucide-react';
 
 interface ResponseDisplayProps {
   response: any;
-  type: 'swap' | 'lend' | 'trade' | 'general' | 'mint';
   isLoading?: boolean;
 }
 
-export default function ResponseDisplay({ response, type, isLoading = false }: ResponseDisplayProps) {
+export default function ResponseDisplay({ response, isLoading = false }: ResponseDisplayProps) {
   const [displayedText, setDisplayedText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
