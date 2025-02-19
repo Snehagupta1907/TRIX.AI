@@ -525,7 +525,10 @@ export default function AIAgent() {
     ? tabs
     : tabs.filter((tab) => tab.id === "general");
 
-  const chains = [{ id: "arbitrum", label: "Arbitrum" }];
+  const chains = [
+    { id: "arbitrum", label: "Arbitrum" },
+    { id: "mantle-sepolia", label: "Mantle Sepolia" },
+  ];
 
   const StarField = () => {
     return (

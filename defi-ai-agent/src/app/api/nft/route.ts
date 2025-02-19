@@ -16,15 +16,13 @@ export async function POST(request: NextRequest) {
       );
     }
     const RPC_URL =
-      "https://arbitrum-sepolia.infura.io/v3/475d3eae8c6d45899d272b36c7cc0c09";
+      "https://endpoints.omniatech.io/v1/mantle/sepolia/public";
     const provider = new ethers.providers.JsonRpcProvider({
       url: RPC_URL,
       skipFetchSetup: true,
     });
     const wallet = new ethers.Wallet(privateKey, provider);
     const signer = await wallet.connect(provider);
-
-    // console.log("Waiting for network", provider);
 
     const nftContract = new ethers.Contract(AINFT_ADDRESS, AINFT_ABI, signer);
 
@@ -33,7 +31,7 @@ export async function POST(request: NextRequest) {
 
     console.log("Transaction Hash:", tx);
     return NextResponse.json({
-      data: `https://sepolia.arbiscan.io/tx/${tx.hash}`,
+      data: `https://explorer.sepolia.mantle.xyz/tx/${tx.hash}`,
     });
   } catch (error) {
     console.error("Error:", error);
