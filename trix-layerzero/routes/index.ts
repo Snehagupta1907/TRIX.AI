@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response, Router } from 'express'
 import { Options } from '@layerzerolabs/lz-v2-utilities'
 import { waitForMessageReceived } from '@layerzerolabs/scan-client'
 import { zeroPad } from '@ethersproject/bytes'
@@ -7,7 +7,7 @@ import { deploymentConfig } from '../deployment_config'
 import dotenv from 'dotenv'
 dotenv.config()
 import { AdapterABI, CustomTokenABI, OftABI } from '../constant'
-const router = express.Router()
+const router = Router()
 
 if (!process.env.RPC_URL) {
     console.error('❌ Missing RPC_URL in environment variables.')
@@ -27,13 +27,22 @@ const getContractInstance = (contractAddress: any, contractABI: any) => {
     return new ethers.Contract(contractAddress, contractABI, signer)
 }
 
-router.post('/sendOFT', async (req, res) => {
+
+router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const { srcChainId, destChainId, amount, receivingAccountAddress } = req.body
     if (!srcChainId || !destChainId || !amount || !receivingAccountAddress) {
-        return res.status(400).send({
+        res.status(400).json({
             message: 'Bad Request',
             data: 'srcChainId, destChainId, amount, receivingAccountAddress are required',
         })
+        return
+    }
+    if (!(srcChainId in deploymentConfig) || !(destChainId in deploymentConfig)) {
+        res.status(400).json({
+            message: 'Invalid srcChainId or destChainId',
+            data: 'Ensure both chain IDs are valid keys in deploymentConfig',
+        })
+        return
     }
 
     const network = await provider.getNetwork()
@@ -41,17 +50,18 @@ router.post('/sendOFT', async (req, res) => {
     const blockNumber = await provider.getBlockNumber()
     console.log('✅ Connected! Latest Block:', blockNumber)
 
-    const oftAdapterContractAddress = deploymentConfig[srcChainId].adapterAddress
-    const lzEndpointIdOnSrcChain = deploymentConfig[srcChainId].lzEndpointId
-    const lzEndpointIdOnDestChain = deploymentConfig[destChainId].lzEndpointId
-    const erc20TokenAddress = deploymentConfig[srcChainId].zeUSDAddress
+    const oftAdapterContractAddress = deploymentConfig[srcChainId as keyof typeof deploymentConfig].adapterAddress
+    const lzEndpointIdOnSrcChain = deploymentConfig[srcChainId as keyof typeof deploymentConfig].lzEndpointId
+    const lzEndpointIdOnDestChain = deploymentConfig[destChainId as keyof typeof deploymentConfig].lzEndpointId
+    const erc20TokenAddress = deploymentConfig[srcChainId as keyof typeof deploymentConfig].zeUSDAddress
 
     const gasDropInWeiOnDestChain = process.env.gasDropInWeiOnDestChain
     const executorLzReceiveOptionMaxGas = process.env.executorLzReceiveOptionMaxGas
     const receiverAddressInBytes32 = zeroPad(receivingAccountAddress, 32)
     const adapterContractInstance = getContractInstance(oftAdapterContractAddress, AdapterABI as any)
     const customTokenContractInstance = getContractInstance(erc20TokenAddress, CustomTokenABI as any)
-    const amountInWei = ethers.parseEther('1')
+    console.log('✅ Contracts Initialized!',customTokenContractInstance)
+    const amountInWei = ethers.parseEther(amount.toString())
 
     console.log(
         `sendOFT - oftAdapterContractAddress:${oftAdapterContractAddress}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, amount:${amount}, erc20TokenAddress:${erc20TokenAddress}`
@@ -98,56 +108,64 @@ router.post('/sendOFT', async (req, res) => {
     console.log('Wait for cross-chain tx finalization by LayerZero ...')
     const deliveredMsg = await waitForMessageReceived(Number(lzEndpointIdOnDestChain), sendTxReceipt?.hash as string)
     console.log('sendOFT - received tx on destination chain:', deliveredMsg?.dstTxHash)
-    res.send({
+    res.json({
         message: 'Success',
         data: {
-            sendParam,
-            nativeFee,
-            sendTxReceipt,
-            deliveredMsg,
+            receipt : sendTxReceipt,
+            message:"sendOFT - received tx on destination chain",
         },
     })
+    return
 })
 
-router.post('/set-peer', async (req, res) => {
+router.post('/set-peer', async (req: Request, res: Response): Promise<void> => {
     const { srcChainId, destChainId } = req.body
     try {
         if (!srcChainId || !destChainId) {
-            return res.status(400).send({
+            res.status(400).json({
                 message: 'Bad Request',
                 data: 'srcChainId, destChainId are required',
             })
+            return
+        }
+        if (!(srcChainId in deploymentConfig) || !(destChainId in deploymentConfig)) {
+            res.status(400).json({
+                message: 'Invalid srcChainId or destChainId',
+                data: 'Ensure both chain IDs are valid keys in deploymentConfig',
+            })
+            return
         }
         if (
-            !deploymentConfig[srcChainId].adapterAddress ||
-            !deploymentConfig[destChainId].lzEndpointId ||
-            !deploymentConfig[destChainId].oft_address
+            !deploymentConfig[srcChainId as keyof typeof deploymentConfig].adapterAddress ||
+            !deploymentConfig[destChainId as keyof typeof deploymentConfig].lzEndpointId ||
+            !deploymentConfig[destChainId as keyof typeof deploymentConfig].oft_address
         ) {
-            return res.status(400).send({
+            res.status(400).json({
                 message: 'Bad Request',
                 data: 'Source Chain Required Data is Not Avaialble in config file ',
             })
+            return
         }
-        const oftAdapterContractAddress = deploymentConfig[srcChainId].adapterAddress
+        const oftAdapterContractAddress = deploymentConfig[srcChainId as keyof typeof deploymentConfig].adapterAddress
         const adapterContractInstance = getContractInstance(oftAdapterContractAddress, AdapterABI as any)
 
         const isSourcPeerAlready = await adapterContractInstance.isPeer(
-            deploymentConfig[destChainId].lzEndpointId,
-            zeroPad(deploymentConfig[destChainId].oft_address, 32)
+            deploymentConfig[destChainId as keyof typeof deploymentConfig].lzEndpointId,
+            zeroPad(deploymentConfig[destChainId as keyof typeof deploymentConfig].oft_address, 32)
         )
         if (isSourcPeerAlready) {
             console.log('Peer Already Set in Source Chain')
         } else {
             const tx = await adapterContractInstance.setPeer(
-                deploymentConfig[destChainId].lzEndpointId,
-                zeroPad(deploymentConfig[destChainId].oft_address, 32)
+                deploymentConfig[destChainId as keyof typeof deploymentConfig].lzEndpointId,
+                zeroPad(deploymentConfig[destChainId as keyof typeof deploymentConfig].oft_address, 32)
             )
             await tx.wait()
             console.log('Peer Set in Source Chain:', tx)
         }
 
-        const oft_contractAddress = deploymentConfig[destChainId].oft_address
-        const lzEndpointIdOnDestChain = deploymentConfig[destChainId].lzEndpointId
+        const oft_contractAddress = deploymentConfig[destChainId as keyof typeof deploymentConfig].oft_address
+        const lzEndpointIdOnDestChain = deploymentConfig[destChainId as keyof typeof deploymentConfig].lzEndpointId
         const oftContractInstance = getContractInstance(oft_contractAddress, OftABI as any)
 
         const isDestPeerAlready = await oftContractInstance.isPeer(
