@@ -6,13 +6,13 @@ import {
   LineChart,
   Send,
   ImagePlay,
-  Loader, 
+  Loader,
   BrainCircuit,
   RefreshCw,
   Sparkles,
   ArrowRightLeft,
   User,
-  Bot
+  Bot,
 } from "lucide-react";
 import ResponseDisplay from "./ResponseDisplay";
 
@@ -433,7 +433,9 @@ export default function AIAgent() {
               ...prev,
               {
                 role: "assistant",
-                content: `I apologize, but there was an error: ${error instanceof Error ? error.message : 'Unknown error'}. Would you like to try again?`,
+                content: `I apologize, but there was an error: ${
+                  error instanceof Error ? error.message : "Unknown error"
+                }. Would you like to try again?`,
               },
             ]);
             if (error instanceof Error) {
@@ -534,7 +536,7 @@ export default function AIAgent() {
               height: `${Math.random() * 2 + 1}px`,
               opacity: Math.random() * 0.7,
               animation: `twinkle ${Math.random() * 5 + 5}s linear infinite`,
-              animationDelay: `${Math.random() * 5}s`
+              animationDelay: `${Math.random() * 5}s`,
             }}
           />
         ))}
@@ -545,7 +547,7 @@ export default function AIAgent() {
   return (
     <div className="flex h-screen relative overflow-hidden font-sans">
       <StarField />
-      
+
       {/* Sidebar with glass morphism */}
       <div className="w-72 bg-black/40 backdrop-blur-xl p-6 flex flex-col border-r border-gray-500/20 z-10 shadow-xl">
         <div className="mb-8">
@@ -561,7 +563,7 @@ export default function AIAgent() {
         {isConnected && (
           <div className="my-6 bg-gray-900/10 p-4 rounded-xl border border-gray-500/20">
             <label className="block text-sm font-medium text-gray-300 mb-2">
-             Choose Network
+              Choose Network
             </label>
             <Select
               value={selectedChain}
@@ -572,7 +574,11 @@ export default function AIAgent() {
               </SelectTrigger>
               <SelectContent className="bg-gray-900 border-gray-500/20">
                 {chains.map((chain) => (
-                  <SelectItem key={chain.id} value={chain.id} className="text-gray-100">
+                  <SelectItem
+                    key={chain.id}
+                    value={chain.id}
+                    className="text-gray-100"
+                  >
                     {chain.label}
                   </SelectItem>
                 ))}
@@ -582,7 +588,9 @@ export default function AIAgent() {
         )}
 
         <div className="space-y-2 flex-1">
-          <h3 className="text-xs uppercase text-gray-400/70 mb-3 font-semibold tracking-wider">Features</h3>
+          <h3 className="text-xs uppercase text-gray-400/70 mb-3 font-semibold tracking-wider">
+            Features
+          </h3>
           {visibleTabs.map((tab) => (
             <button
               key={tab.id}
@@ -598,7 +606,7 @@ export default function AIAgent() {
             </button>
           ))}
         </div>
-        
+
         <div className="mt-auto pt-4 border-t border-gray-500/10 text-xs text-gray-400/60 flex items-center gap-2">
           <RefreshCw size={12} />
           <span>Updated Feb 19, 2025</span>
@@ -612,13 +620,20 @@ export default function AIAgent() {
             <div className="rounded-full bg-gray-500/10 p-6 mb-6">
               <BrainCircuit className="text-gray-400" size={48} />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-100 mb-3">Trix AI Assistant</h2>
+            <h2 className="text-2xl font-semibold text-gray-100 mb-3">
+              Trix AI Assistant
+            </h2>
             <p className="text-gray-300 text-center max-w-md mb-8">
-              Your personal crypto and DeFi guide. Ask me anything about tokens, trading, NFTs, or general questions.
+              Your personal crypto and DeFi guide. Ask me anything about tokens,
+              trading, NFTs, or general questions.
             </p>
             <div className="grid grid-cols-2 gap-4 w-full max-w-2xl">
-              {["Tell me about DeFi yield strategies", "How to swap ETH to USDC efficiently?", 
-                "Generate an NFT with cosmic theme", "Analyze ETH price trend"].map((suggestion, idx) => (
+              {[
+                "Tell me about DeFi yield strategies",
+                "How to swap ETH to USDC efficiently?",
+                "Generate an NFT with cosmic theme",
+                "Analyze ETH price trend",
+              ].map((suggestion, idx) => (
                 <button
                   key={idx}
                   onClick={() => {
@@ -636,20 +651,28 @@ export default function AIAgent() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex max-w-5xl mx-auto ${message.role === "assistant" ? "justify-start" : "justify-end"}`}
+                className={`flex max-w-5xl mx-auto ${
+                  message.role === "assistant" ? "justify-start" : "justify-end"
+                }`}
               >
                 <div
                   className={`flex max-w-4xl ${
                     message.role === "assistant"
                       ? "bg-[#212121] backdrop-blur-sm border border-gray-500/10"
-                      : "bg-gray-700 text-black backdrop-blur-sm"
-                  } p-5 rounded-2xl ${message.role === "assistant" ? "rounded-tl-sm" : "rounded-tr-sm"} shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
+                      : "bg-indigo-800 text-black backdrop-blur-sm"
+                  } p-5 rounded-2xl ${
+                    message.role === "assistant"
+                      ? "rounded-tl-sm"
+                      : "rounded-tr-sm"
+                  } shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
                 >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${
-                    message.role === "assistant" 
-                      ? "bg-gradient-to-r from-indigo-500 to-gray-600"
-                      : "bg-gradient-to-r from-pink-300 to-gray-500"
-                  }`}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${
+                      message.role === "assistant"
+                        ? "bg-gradient-to-r from-indigo-500 to-gray-600"
+                        : "bg-gradient-to-r from-black to-gray-500"
+                    }`}
+                  >
                     {message.role === "assistant" ? (
                       <BrainCircuit className="text-white" size={18} />
                     ) : (
@@ -657,22 +680,15 @@ export default function AIAgent() {
                     )}
                   </div>
                   <div className="flex-1 w-full">
-                    <ResponseDisplay response={message.content}  />
+                    <ResponseDisplay response={message.content} />
                   </div>
                 </div>
               </div>
             ))}
             {loading && (
-              <div className="flex max-w-4xl mx-auto">
-                <div className="flex max-w-xl bg-[#212121] backdrop-blur-sm border border-gray-500/10 p-5 rounded-2xl rounded-tl-sm">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-gray-600 flex items-center justify-center mr-4 flex-shrink-0">
-                    <BrainCircuit className="text-white" size={18} />
-                  </div>
-                  <ResponseDisplay 
-                    response={null} 
-                  
-                    isLoading={true} 
-                  />
+              <div className="flex max-w-5xl mx-auto">
+                <div className="flex w-[50rem]  backdrop-blur-sm   p-5 rounded-2xl rounded-tl-sm">
+                  <ResponseDisplay response={null} isLoading={true} />
                 </div>
               </div>
             )}
@@ -680,7 +696,10 @@ export default function AIAgent() {
         )}
 
         <div className="border-t border-gray-500/10 p-6 bg-black/60 backdrop-blur-xl">
-          <form onSubmit={handleSubmit} className="flex items-end gap-4 max-w-5xl mx-auto relative">
+          <form
+            onSubmit={handleSubmit}
+            className="flex items-end gap-4 max-w-5xl mx-auto relative"
+          >
             <div className="flex-1 relative">
               <textarea
                 value={userInput}
@@ -702,9 +721,11 @@ export default function AIAgent() {
                 className="w-full bg-black/50 border border-gray-500/20 rounded-2xl p-4 pb-12 text-gray-100 placeholder-gray-500/50 focus:ring-2 focus:ring-gray-500/50 focus:border-transparent resize-none h-24 transition-all duration-200 focus:shadow-lg focus:shadow-gray-500/10"
               />
               {error && (
-                <div className="absolute bottom-3 left-4 text-red-400 text-sm">{error}</div>
+                <div className="absolute bottom-3 left-4 text-red-400 text-sm">
+                  {error}
+                </div>
               )}
-              
+
               {messages.length > 0 && !loading && (
                 <div className="absolute bottom-3 left-4 text-gray-400/70 text-xs flex items-center gap-1">
                   <Sparkles size={12} />
@@ -721,7 +742,11 @@ export default function AIAgent() {
               }
               className="bg-gradient-to-r from-gray-500 to-white hover:from-gray-600 hover:to-gray-400 disabled:from-gray-600 disabled:to-gray-700 text-white p-4 rounded-xl flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-gray-500/20 disabled:shadow-none h-12 w-12 mb-2"
             >
-              {loading ? <Loader size={20} className="animate-spin" /> : <Send size={18} color="black" />}
+              {loading ? (
+                <Loader size={20} className="animate-spin" />
+              ) : (
+                <Send size={18} color="black" />
+              )}
             </button>
           </form>
         </div>
