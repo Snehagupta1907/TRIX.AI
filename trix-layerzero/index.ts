@@ -23,6 +23,9 @@ const limiter = rateLimit({
 })
 
 app.use(limiter)
+app.use("/",async (req,res)=>{
+    res.send("Hello World")
+});
 app.use('/api', router)
 
 app.listen(process.env.PORT ? process.env.PORT : 3000, function () {
