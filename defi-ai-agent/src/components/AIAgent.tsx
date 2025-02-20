@@ -433,9 +433,8 @@ export default function AIAgent() {
               ...prev,
               {
                 role: "assistant",
-                content: `I apologize, but there was an error: ${
-                  error instanceof Error ? error.message : "Unknown error"
-                }. Would you like to try again?`,
+                content: `I apologize, but there was an error: ${error instanceof Error ? error.message : "Unknown error"
+                  }. Would you like to try again?`,
               },
             ]);
             if (error instanceof Error) {
@@ -595,11 +594,10 @@ export default function AIAgent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
-                activeTab === tab.id
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${activeTab === tab.id
                   ? "bg-gradient-to-r from-gray-500/20 to-black/20 text-white border border-gray-500/20 shadow-lg shadow-gray-500/5"
                   : "text-gray-300 hover:bg-gray-500/10"
-              }`}
+                }`}
             >
               {tab.icon}
               <span className="font-medium">{tab.label}</span>
@@ -651,27 +649,23 @@ export default function AIAgent() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex max-w-5xl mx-auto ${
-                  message.role === "assistant" ? "justify-start" : "justify-end"
-                }`}
+                className={`flex max-w-5xl mx-auto ${message.role === "assistant" ? "justify-start" : "justify-end"
+                  }`}
               >
                 <div
-                  className={`flex max-w-4xl ${
-                    message.role === "assistant"
+                  className={`flex max-w-4xl ${message.role === "assistant"
                       ? "bg-[#212121] backdrop-blur-sm border border-gray-500/10"
                       : "bg-indigo-800 text-black backdrop-blur-sm"
-                  } p-5 rounded-2xl ${
-                    message.role === "assistant"
+                    } p-5 rounded-2xl ${message.role === "assistant"
                       ? "rounded-tl-sm"
                       : "rounded-tr-sm"
-                  } shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
+                    } shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${
-                      message.role === "assistant"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${message.role === "assistant"
                         ? "bg-gradient-to-r from-indigo-500 to-gray-600"
                         : "bg-gradient-to-r from-black to-gray-500"
-                    }`}
+                      }`}
                   >
                     {message.role === "assistant" ? (
                       <BrainCircuit className="text-white" size={18} />
@@ -709,14 +703,14 @@ export default function AIAgent() {
                   !isConnected
                     ? "Connect your wallet or ask general questions..."
                     : activeTab === "swap"
-                    ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
-                    : activeTab === "lend"
-                    ? "e.g., 'Find best lending rates for ETH'"
-                    : activeTab === "trade"
-                    ? "e.g., 'Analyze ETH/USDC trading opportunities'"
-                    : activeTab === "mint"
-                    ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
-                    : "Ask me anything..."
+                      ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
+                      : activeTab === "lend"
+                        ? "e.g., 'Find best lending rates for ETH'"
+                        : activeTab === "trade"
+                          ? "e.g., 'Analyze ETH/USDC trading opportunities'"
+                          : activeTab === "mint"
+                            ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
+                            : "Ask me anything..."
                 }
                 className="w-full bg-black/50 border border-gray-500/20 rounded-2xl p-4 pb-12 text-gray-100 placeholder-gray-500/50 focus:ring-2 focus:ring-gray-500/50 focus:border-transparent resize-none h-24 transition-all duration-200 focus:shadow-lg focus:shadow-gray-500/10"
               />

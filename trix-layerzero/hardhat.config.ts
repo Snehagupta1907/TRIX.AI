@@ -102,6 +102,11 @@ module.exports = {
             url: 'https://rpc.ankr.com/eth_holesky',
             accounts: ACCOUNTS,
         },
+        bscTestnet: {
+            chainId: 97,
+            url: 'https://bsc-testnet.bnbchain.org/',
+            accounts: ACCOUNTS,
+        },
     },
     etherscan: {
         apiKey: {

@@ -11,8 +11,8 @@ export const deploymentConfig = {
     57054: {
         network: 'sonic-blaze-testnet',
         chainId: 57054,
-        zeUSDAddress: '',
-        adapterAddress: '',
+        zeUSDAddress: '0xA0D0e6c4277a869cD3c8C3FEc7D00F0bd8E109e8',
+        adapterAddress: '0x1F887A5E1F0878731DfA83E24A1916EE7e445a77',
         oft_address: '0xBFff78BB02925E4D8671D0d90B2a6330fcAedd87',
         lzEndpointOnSrcChain: '0x6C7Ab2202C98C4227C5c46f1417D81144DA716Ff',
         lzEndpointId: '40349',
@@ -25,5 +25,14 @@ export const deploymentConfig = {
         oft_address: '0x72105396D6b1c1378581D5Be21683A6470c1F2aE',
         lzEndpointOnSrcChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
         lzEndpointId: '40217',
+    },
+    97: {
+        network: 'bsc-testnet',
+        chainId: 97,
+        zeUSDAddress: '',
+        adapterAddress: '',
+        oft_address: '0x5c7176e3e2511577E495AE8872EB1a84fD7959E1',
+        lzEndpointOnSrcChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
+        lzEndpointId: '40102',
     },
 }
