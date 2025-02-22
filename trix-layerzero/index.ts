@@ -23,7 +23,7 @@ const limiter = rateLimit({
 })
 
 app.use(limiter)
-app.use("/",async (req,res)=>{
+app.get("/",async (req,res)=>{
     res.send("Hello World")
 });
 app.use('/api', router)

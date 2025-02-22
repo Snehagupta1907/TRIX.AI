@@ -4,6 +4,7 @@ import { waitForMessageReceived } from '@layerzerolabs/scan-client'
 import { zeroPad } from '@ethersproject/bytes'
 import { ethers } from 'ethers'
 import { deploymentConfig } from '../deployment_config'
+
 import dotenv from 'dotenv'
 dotenv.config()
 import { AdapterABI, CustomTokenABI, OftABI } from '../constant'
@@ -28,6 +29,7 @@ const getContractInstance = (contractAddress: any, contractABI: any) => {
 
 router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const { srcChainId, destChainId, amount, receivingAccountAddress } = req.body
+    console.log('sendOFT - req.body:', req.body)
     if (!srcChainId || !destChainId || !amount || !receivingAccountAddress) {
         res.status(400).json({
             message: 'Bad Request',
@@ -87,33 +89,42 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     ]
 
     console.log('sendOFT - sendParam:', sendParam)
+    try {
+        const [nativeFee] = await adapterContractInstance.quoteSend(sendParam, false)
+        console.log('sendOFT - estimated nativeFee:', ethers.formatEther(nativeFee))
 
-    const [nativeFee] = await adapterContractInstance.quoteSend(sendParam, false)
-    console.log('sendOFT - estimated nativeFee:', ethers.formatEther(nativeFee))
+        const sendTx = await adapterContractInstance.send(
+            sendParam as any,
+            [nativeFee, 0] as any, // set 0 for lzTokenFee
+            receivingAccountAddress, // refund address
+            {
+                value: nativeFee,
+            }
+        )
+        const sendTxReceipt = await sendTx.wait()
+        console.log('sendOFT - send tx on source chain:', sendTxReceipt?.hash)
 
-    const sendTx = await adapterContractInstance.send(
-        sendParam as any,
-        [nativeFee, 0] as any, // set 0 for lzTokenFee
-        receivingAccountAddress, // refund address
-        {
-            value: nativeFee,
-        }
-    )
-    const sendTxReceipt = await sendTx.wait()
-    console.log('sendOFT - send tx on source chain:', sendTxReceipt?.hash)
-
-    // // Wait for cross-chain tx finalization by LayerZero
-    console.log('Wait for cross-chain tx finalization by LayerZero ...')
-    const deliveredMsg = await waitForMessageReceived(Number(lzEndpointIdOnDestChain), sendTxReceipt?.hash as string)
-    console.log('sendOFT - received tx on destination chain:', deliveredMsg?.dstTxHash)
-    res.json({
-        message: 'Success',
-        data: {
-            receipt: sendTxReceipt,
-            message: 'sendOFT - received tx on destination chain',
-        },
-    })
-    return
+        // // Wait for cross-chain tx finalization by LayerZero
+        console.log('Wait for cross-chain tx finalization by LayerZero ...')
+        const deliveredMsg = await waitForMessageReceived(
+            Number(lzEndpointIdOnDestChain),
+            sendTxReceipt?.hash as string
+        )
+        console.log('sendOFT - received tx on destination chain:', deliveredMsg?.dstTxHash)
+        res.status(200).json({
+            message: 'Success',
+            data: {
+                receipt: sendTxReceipt,
+                message: 'sendOFT - received tx on destination chain',
+                url:`https://testnet.layerzeroscan.com/tx/${sendTxReceipt?.hash}`
+            },
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: 'Internal Server Error',
+            data: error,
+        })
+    }
 })
 
 router.post('/set-peer', async (req: Request, res: Response): Promise<void> => {
