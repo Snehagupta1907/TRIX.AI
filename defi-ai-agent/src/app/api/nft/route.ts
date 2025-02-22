@@ -1,42 +1,73 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextRequest, NextResponse } from "next/server";
 import { ethers } from "ethers";
-import { AINFT_ADDRESS } from "@/lib/constants";
+import { AINFT_ADDRESS_MAP } from "@/lib/constants";
 import { AINFT_ABI } from "@/lib/abi";
+
+type Chain = "arbitrum" | "mantle" | "sonic" | "sepolia";
+
+
+const RPC_URL_MAP: Record<Chain, string> = {
+  arbitrum: "https://arb1.arbitrum.io/rpc", // Sample endpoint for Arbitrum
+  mantle: "https://endpoints.omniatech.io/v1/mantle/sepolia/public", // Sample endpoint for Mantle
+  sonic: "https://sonic.rpc.endpoint", // Replace with the actual Sonic RPC endpoint
+  sepolia: "https://sepolia.rpc.endpoint", // Replace with the actual Sepolia RPC endpoint
+};
+
+
+const EXPLORER_URL_MAP: Record<Chain, string> = {
+  arbitrum: "https://arbiscan.io/tx/",
+  mantle: "https://explorer.mantle.xyz/tx/",
+  sonic: "https://explorer.sonic.io/tx/",
+  sepolia: "https://sepolia.etherscan.io/tx/",
+};
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const privateKey = process.env.WALLET_PRIVATE_KEY;
-    const { WALLET_ADDRESS, TOKEN_URI } = body;
-    if (!privateKey || !AINFT_ADDRESS || !WALLET_ADDRESS || !TOKEN_URI) {
+    const { WALLET_ADDRESS, TOKEN_URI, chainId } = body;
+
+    if (!privateKey || !WALLET_ADDRESS || !TOKEN_URI || !chainId) {
       return NextResponse.json(
         { error: "Missing required input or environment variables" },
         { status: 400 }
       );
     }
-    const RPC_URL =
-      "https://endpoints.omniatech.io/v1/mantle/sepolia/public";
+
+    // Validate the chain input
+    const chain = chainId as Chain;
+    if (!RPC_URL_MAP[chain] || !AINFT_ADDRESS_MAP[chain]) {
+      return NextResponse.json(
+        { error: "Unsupported chain id" },
+        { status: 400 }
+      );
+    }
+
+    const RPC_URL = RPC_URL_MAP[chain];
     const provider = new ethers.providers.JsonRpcProvider({
       url: RPC_URL,
       skipFetchSetup: true,
     });
     const wallet = new ethers.Wallet(privateKey, provider);
-    const signer = await wallet.connect(provider);
+    const signer = wallet.connect(provider);
 
-    const nftContract = new ethers.Contract(AINFT_ADDRESS, AINFT_ABI, signer);
+    // Get the NFT contract address for the specified chain
+    const nftContractAddress = AINFT_ADDRESS_MAP[chain];
+    const nftContract = new ethers.Contract(nftContractAddress, AINFT_ABI, signer);
 
     const tx = await nftContract.mintNFT(WALLET_ADDRESS, TOKEN_URI);
     await tx.wait();
 
-    console.log("Transaction Hash:", tx);
+    console.log("Transaction Hash:", tx.hash);
     return NextResponse.json({
-      data: `https://explorer.sepolia.mantle.xyz/tx/${tx.hash}`,
+      data: `${EXPLORER_URL_MAP[chain]}${tx.hash}`,
     });
   } catch (error) {
     console.error("Error:", error);
+    const errorMessage = (error as Error).message;
     return NextResponse.json(
-      { error: "Internal Server Error", details: error.message },
+      { error: "Internal Server Error", details: errorMessage },
       { status: 500 }
     );
   }
