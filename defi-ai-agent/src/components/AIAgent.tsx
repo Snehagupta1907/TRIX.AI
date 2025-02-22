@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import React, { useState, KeyboardEvent } from "react";
 import { useAccount } from "wagmi";
@@ -13,6 +15,7 @@ import {
   ArrowRightLeft,
   User,
   Bot,
+  ArrowUpDown,
 } from "lucide-react";
 import ResponseDisplay from "./ResponseDisplay";
 
@@ -27,7 +30,7 @@ import { generateImage } from "@/utils/img-gen";
 import { formatNftPrompt } from "@/utils/prompt";
 import { CustomConnect } from "./CustomConnect";
 
-type TabType = "general" | "swap" | "lend" | "trade" | "mint";
+type TabType = "general" | "swap" | "lend" | "trade" | "mint" | "cross-chain";
 type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
 
 export default function AIAgent() {
@@ -47,6 +50,15 @@ export default function AIAgent() {
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
     null
   );
+
+  const [crossChainState, setCrossChainState] = useState<CrossChainState>({
+    action: null,
+    srcChainId: "",
+    destChainId: "",
+    amount: "",
+    receivingAccountAddress: "",
+  });
+
   type SwapStep =
     | "SETUP_CONFIRMATION"
     | "AWAIT_DEPOSIT_APPROVAL"
@@ -68,6 +80,14 @@ export default function AIAgent() {
   interface PendingSwap {
     step: SwapStep;
     details?: SwapDetails;
+  }
+
+  interface CrossChainState {
+    action: "sendOFT" | "setPeer" | null;
+    srcChainId: string;
+    destChainId: string;
+    amount?: string;
+    receivingAccountAddress?: string;
   }
 
   // State definitions
@@ -98,396 +118,1018 @@ export default function AIAgent() {
 
   console.log(pendingSwap, safeAddress, privateKey);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!userInput.trim()) return;
-    setError("");
-    setLoading(true);
+  // const handleSubmit = async (e?: React.FormEvent) => {
+  //   e?.preventDefault();
+  //   if (!userInput.trim()) return;
+  //   setError("");
+  //   setLoading(true);
 
-    // Append the user's message to the conversation
-    const currentInput = userInput;
-    console.log(currentInput);
-    setMessages((prev) => [...prev, { role: "user", content: currentInput }]);
-    setUserInput("");
+  //   // Append the user's message to the conversation
+  //   const currentInput = userInput;
+  //   console.log(currentInput);
+  //   setMessages((prev) => [...prev, { role: "user", content: currentInput }]);
+  //   setUserInput("");
 
-    try {
-      let response;
+  //   try {
+  //     let response;
 
-      switch (activeTab) {
-        case "mint":
-          if (!address) {
-            setError("Wallet must be connected to mint an NFT.");
-            setLoading(false);
-            return;
-          }
+  //     switch (activeTab) {
+  //       case "mint":
+  //         if (!address) {
+  //           setError("Wallet must be connected to mint an NFT.");
+  //           setLoading(false);
+  //           return;
+  //         }
 
-          // If we already generated an NFT and are waiting for confirmation…
-          if (pendingNFT) {
-            if (isConfirmation(currentInput)) {
-              // User confirmed; proceed with minting the NFT
-              const requestBody = {
-                WALLET_ADDRESS: address,
-                TOKEN_URI: pendingNFT.nftIpfsUrl,
-              };
-              response = await fetch("/api/nft", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(requestBody),
-              });
-              // Clear the pending NFT after minting
-              setPendingNFT(null);
-            } else {
-              // No confirmation detected: cancel minting
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content:
-                    "Minting cancelled. If you want to mint, please generate a new NFT image.",
-                },
-              ]);
-              setPendingNFT(null);
-              setLoading(false);
-              return;
-            }
-          } else {
-            // No pending NFT – generate the NFT image and ask for confirmation
-            const tokenUri = await generateImage(formatNftPrompt(currentInput));
-            console.log(tokenUri);
-            if (tokenUri?.nftIpfsUrl) {
-              setPendingNFT({ nftIpfsUrl: tokenUri.nftIpfsUrl });
-            } else {
-              setError("Error generating NFT image.");
-              setLoading(false);
-              return;
-            }
+  //         // If we already generated an NFT and are waiting for confirmation…
+  //         if (pendingNFT) {
+  //           if (isConfirmation(currentInput)) {
+  //             // User confirmed; proceed with minting the NFT
+  //             const requestBody = {
+  //               WALLET_ADDRESS: address,
+  //               TOKEN_URI: pendingNFT.nftIpfsUrl,
+  //             };
+  //             response = await fetch("/api/nft", {
+  //               method: "POST",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify(requestBody),
+  //             });
+  //             // Clear the pending NFT after minting
+  //             setPendingNFT(null);
+  //           } else {
+  //             // No confirmation detected: cancel minting
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content:
+  //                   "Minting cancelled. If you want to mint, please generate a new NFT image.",
+  //               },
+  //             ]);
+  //             setPendingNFT(null);
+  //             setLoading(false);
+  //             return;
+  //           }
+  //         } else {
+  //           // No pending NFT – generate the NFT image and ask for confirmation
+  //           const tokenUri = await generateImage(formatNftPrompt(currentInput));
+  //           console.log(tokenUri);
+  //           if (tokenUri?.nftIpfsUrl) {
+  //             setPendingNFT({ nftIpfsUrl: tokenUri.nftIpfsUrl });
+  //           } else {
+  //             setError("Error generating NFT image.");
+  //             setLoading(false);
+  //             return;
+  //           }
 
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "assistant",
-                content: {
-                  text: "Here is your generated image:",
-                  imageSrc: tokenUri?.img, // Store the image URL separately
-                },
-              },
-            ]);
-            setLoading(false);
-            return; // wait for the user's confirmation response
-          }
-          break;
+  //           setMessages((prev) => [
+  //             ...prev,
+  //             {
+  //               role: "assistant",
+  //               content: {
+  //                 text: "Here is your generated image:",
+  //                 imageSrc: tokenUri?.img, // Store the image URL separately
+  //               },
+  //             },
+  //           ]);
+  //           setLoading(false);
+  //           return; // wait for the user's confirmation response
+  //         }
+  //         break;
 
-        case "swap": {
-          try {
-            // New user without Safe - Initial interaction
-            if (!privateKey) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content:
-                    "To proceed with the swap, I'll need your private key. Please enter it now:",
-                },
-              ]);
-              setPendingSwap({ step: "AWAIT_PRIVATE_KEY" });
-              return;
-            }
+  //       case "swap": {
+  //         try {
+  //           // New user without Safe - Initial interaction
+  //           if (!privateKey) {
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content:
+  //                   "To proceed with the swap, I'll need your private key. Please enter it now:",
+  //               },
+  //             ]);
+  //             setPendingSwap({ step: "AWAIT_PRIVATE_KEY" });
+  //             return;
+  //           }
 
-            // Handle private key input
-            if (pendingSwap?.step === "AWAIT_PRIVATE_KEY") {
-              const inputKey = currentInput.trim();
-              console.log("Input Private Key:", inputKey);
+  //           // Handle private key input
+  //           if (pendingSwap?.step === "AWAIT_PRIVATE_KEY") {
+  //             const inputKey = currentInput.trim();
+  //             console.log("Input Private Key:", inputKey);
 
-              setPrivateKey(inputKey);
+  //             setPrivateKey(inputKey);
 
-              // Ensure state has updated before proceeding
-              setTimeout(() => {
-                if (!safeAddress) {
-                  setMessages((prev) => [
-                    ...prev,
-                    {
-                      role: "assistant",
-                      content:
-                        "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
-                    },
-                  ]);
-                  setPendingSwap({ step: "SETUP_CONFIRMATION" });
-                }
-              }, 100); // Adjust timeout as needed
-            }
+  //             // Ensure state has updated before proceeding
+  //             setTimeout(() => {
+  //               if (!safeAddress) {
+  //                 setMessages((prev) => [
+  //                   ...prev,
+  //                   {
+  //                     role: "assistant",
+  //                     content:
+  //                       "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+  //                   },
+  //                 ]);
+  //                 setPendingSwap({ step: "SETUP_CONFIRMATION" });
+  //               }
+  //             }, 100); // Adjust timeout as needed
+  //           }
 
-            if (!safeAddress && !pendingSwap) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content:
-                    "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
-                },
-              ]);
+  //           if (!safeAddress && !pendingSwap) {
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content:
+  //                   "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+  //               },
+  //             ]);
 
-              setPendingSwap({ step: "SETUP_CONFIRMATION" });
-              return;
-            }
+  //             setPendingSwap({ step: "SETUP_CONFIRMATION" });
+  //             return;
+  //           }
 
-            // User confirmed Safe setup
-            if (
-              !safeAddress &&
-              pendingSwap?.step === "SETUP_CONFIRMATION" &&
-              isConfirmation(currentInput)
-            ) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: "Creating your Safe wallet now...",
-                },
-              ]);
+  //           // User confirmed Safe setup
+  //           if (
+  //             !safeAddress &&
+  //             pendingSwap?.step === "SETUP_CONFIRMATION" &&
+  //             isConfirmation(currentInput)
+  //           ) {
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: "Creating your Safe wallet now...",
+  //               },
+  //             ]);
 
-              const safeResponse = await fetch("/api/setup-safe", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  SIGNER_PRIVATE_KEY: privateKey,
-                }),
-              });
+  //             const safeResponse = await fetch("/api/setup-safe", {
+  //               method: "POST",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify({
+  //                 SIGNER_PRIVATE_KEY: privateKey,
+  //               }),
+  //             });
 
-              if (safeResponse.status === 500) {
-                const err = await safeResponse.json();
-                console.log({ err });
-                throw new Error(err?.details || "Error creating");
-              }
+  //             if (safeResponse.status === 500) {
+  //               const err = await safeResponse.json();
+  //               console.log({ err });
+  //               throw new Error(err?.details || "Error creating");
+  //             }
 
-              const { safeAddress: newSafeAddress } = await safeResponse.json();
-              setSafeAddress(newSafeAddress);
+  //             const { safeAddress: newSafeAddress } = await safeResponse.json();
+  //             setSafeAddress(newSafeAddress);
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `Great! I've created your Safe wallet at ${newSafeAddress}. Before we can swap, we need to deposit some ETH and approve it for trading. Should I proceed with that?`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `Great! I've created your Safe wallet at ${newSafeAddress}. Before we can swap, we need to deposit some ETH and approve it for trading. Should I proceed with that?`,
+  //               },
+  //             ]);
 
-              setPendingSwap({ step: "AWAIT_DEPOSIT_APPROVAL" });
-              return;
-            }
+  //             setPendingSwap({ step: "AWAIT_DEPOSIT_APPROVAL" });
+  //             return;
+  //           }
 
-            // User confirmed deposit and approve
-            if (
-              pendingSwap?.step === "AWAIT_DEPOSIT_APPROVAL" &&
-              isConfirmation(currentInput)
-            ) {
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: "Processing deposit and approval...",
-                },
-              ]);
+  //           // User confirmed deposit and approve
+  //           if (
+  //             pendingSwap?.step === "AWAIT_DEPOSIT_APPROVAL" &&
+  //             isConfirmation(currentInput)
+  //           ) {
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: "Processing deposit and approval...",
+  //               },
+  //             ]);
 
-              const approveResponse = await fetch("/api/deposit-approve-cow", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  SAFE_ADDRESS: safeAddress,
-                  SIGNER_PRIVATE_KEY: privateKey,
-                }),
-              });
+  //             const approveResponse = await fetch("/api/deposit-approve-cow", {
+  //               method: "POST",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify({
+  //                 SAFE_ADDRESS: safeAddress,
+  //                 SIGNER_PRIVATE_KEY: privateKey,
+  //               }),
+  //             });
 
-              if (!approveResponse.ok)
-                throw new Error("Failed to execute deposit and approval");
+  //             if (!approveResponse.ok)
+  //               throw new Error("Failed to execute deposit and approval");
 
-              const { transactionHash, wethBalance, ethBalance } =
-                await approveResponse.json();
+  //             const { transactionHash, wethBalance, ethBalance } =
+  //               await approveResponse.json();
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `Perfect! The deposit and approval are complete (tx: ${transactionHash}). Your balances are: ${ethBalance} ETH and ${wethBalance} WETH. Which token would you like to swap from? (e.g., WETH)`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `Perfect! The deposit and approval are complete (tx: ${transactionHash}). Your balances are: ${ethBalance} ETH and ${wethBalance} WETH. Which token would you like to swap from? (e.g., WETH)`,
+  //               },
+  //             ]);
 
-              setPendingSwap({
-                step: "AWAIT_SELL_TOKEN",
-                details: {},
-              });
-              return;
-            }
+  //             setPendingSwap({
+  //               step: "AWAIT_SELL_TOKEN",
+  //               details: {},
+  //             });
+  //             return;
+  //           }
 
-            // User provided sell token
-            if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
-              const sellToken = currentInput.trim();
+  //           // User provided sell token
+  //           if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
+  //             const sellToken = currentInput.trim();
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `Got it, you want to swap from ${sellToken}. Which token would you like to swap to?`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `Got it, you want to swap from ${sellToken}. Which token would you like to swap to?`,
+  //               },
+  //             ]);
 
-              setPendingSwap({
-                step: "AWAIT_BUY_TOKEN",
-                details: {
-                  ...pendingSwap.details,
-                  sellToken,
-                },
-              });
-              return;
-            }
+  //             setPendingSwap({
+  //               step: "AWAIT_BUY_TOKEN",
+  //               details: {
+  //                 ...pendingSwap.details,
+  //                 sellToken,
+  //               },
+  //             });
+  //             return;
+  //           }
 
-            // User provided buy token
-            if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
-              const buyToken = currentInput.trim();
+  //           // User provided buy token
+  //           if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
+  //             const buyToken = currentInput.trim();
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `Great, you want to swap from ${pendingSwap?.details?.sellToken} to ${buyToken}. How much ${pendingSwap?.details?.sellToken} would you like to swap? (Enter amount)`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `Great, you want to swap from ${pendingSwap?.details?.sellToken} to ${buyToken}. How much ${pendingSwap?.details?.sellToken} would you like to swap? (Enter amount)`,
+  //               },
+  //             ]);
 
-              setPendingSwap({
-                step: "AWAIT_AMOUNT",
-                details: {
-                  ...pendingSwap.details,
-                  buyToken,
-                },
-              });
-              return;
-            }
+  //             setPendingSwap({
+  //               step: "AWAIT_AMOUNT",
+  //               details: {
+  //                 ...pendingSwap.details,
+  //                 buyToken,
+  //               },
+  //             });
+  //             return;
+  //           }
 
-            // User provided amount
-            if (pendingSwap?.step === "AWAIT_AMOUNT") {
-              const amount = currentInput.trim();
-              const { sellToken, buyToken } = pendingSwap?.details || {};
+  //           // User provided amount
+  //           if (pendingSwap?.step === "AWAIT_AMOUNT") {
+  //             const amount = currentInput.trim();
+  //             const { sellToken, buyToken } = pendingSwap?.details || {};
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `To confirm: You want to swap ${amount} ${sellToken} for ${buyToken}. Would you like to proceed with the swap?`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `To confirm: You want to swap ${amount} ${sellToken} for ${buyToken}. Would you like to proceed with the swap?`,
+  //               },
+  //             ]);
 
-              setPendingSwap({
-                step: "CONFIRM_SWAP",
-                details: {
-                  inputAmt: amount,
-                  sellAddress: sellToken, // You'll need to define these addresses
-                  buyAddress: buyToken,
-                },
-              });
-              return;
-            }
+  //             setPendingSwap({
+  //               step: "CONFIRM_SWAP",
+  //               details: {
+  //                 inputAmt: amount,
+  //                 sellAddress: sellToken, // You'll need to define these addresses
+  //                 buyAddress: buyToken,
+  //               },
+  //             });
+  //             return;
+  //           }
 
-            // Execute final swap
-            if (
-              pendingSwap?.step === "CONFIRM_SWAP" &&
-              isConfirmation(currentInput)
-            ) {
-              const { details } = pendingSwap;
+  //           // Execute final swap
+  //           if (
+  //             pendingSwap?.step === "CONFIRM_SWAP" &&
+  //             isConfirmation(currentInput)
+  //           ) {
+  //             const { details } = pendingSwap;
 
-              console.log(safeAddress, privateKey, details);
+  //             console.log(safeAddress, privateKey, details);
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: "Executing your swap...",
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: "Executing your swap...",
+  //               },
+  //             ]);
 
-              const swapResponse = await fetch("/api/swap-cow", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  SAFE_ADDRESS: safeAddress,
-                  SIGNER_PRIVATE_KEY: privateKey,
-                  buyAddress: details?.buyAddress,
-                  sellAddress: details?.sellAddress,
-                  inputAmt: details?.inputAmt,
-                }),
-              });
+  //             const swapResponse = await fetch("/api/swap-cow", {
+  //               method: "POST",
+  //               headers: { "Content-Type": "application/json" },
+  //               body: JSON.stringify({
+  //                 SAFE_ADDRESS: safeAddress,
+  //                 SIGNER_PRIVATE_KEY: privateKey,
+  //                 buyAddress: details?.buyAddress,
+  //                 sellAddress: details?.sellAddress,
+  //                 inputAmt: details?.inputAmt,
+  //               }),
+  //             });
 
-              if (!swapResponse.ok) throw new Error("Failed to execute swap");
+  //             if (!swapResponse.ok) throw new Error("Failed to execute swap");
 
-              const { transactionHash } = await swapResponse.json();
+  //             const { transactionHash } = await swapResponse.json();
 
-              setMessages((prev) => [
-                ...prev,
-                {
-                  role: "assistant",
-                  content: `Great news! Your swap is complete. You can view the transaction here: ${transactionHash}`,
-                },
-              ]);
+  //             setMessages((prev) => [
+  //               ...prev,
+  //               {
+  //                 role: "assistant",
+  //                 content: `Great news! Your swap is complete. You can view the transaction here: ${transactionHash}`,
+  //               },
+  //             ]);
 
-              setPendingSwap(null);
-            }
-          } catch (error) {
-            console.error("Swap error:", error);
-            setMessages((prev) => [
-              ...prev,
-              {
-                role: "assistant",
-                content: `I apologize, but there was an error: ${error instanceof Error ? error.message : "Unknown error"
-                  }. Would you like to try again?`,
-              },
-            ]);
-            if (error instanceof Error) {
-              setError(error.message);
-            } else {
-              setError("An unknown error occurred.");
-            }
-            setPendingSwap(null);
-          } finally {
-            setLoading(false);
-          }
-          break;
-        }
+  //             setPendingSwap(null);
+  //           }
+  //         } catch (error) {
+  //           console.error("Swap error:", error);
+  //           setMessages((prev) => [
+  //             ...prev,
+  //             {
+  //               role: "assistant",
+  //               content: `I apologize, but there was an error: ${error instanceof Error ? error.message : "Unknown error"
+  //                 }. Would you like to try again?`,
+  //             },
+  //           ]);
+  //           if (error instanceof Error) {
+  //             setError(error.message);
+  //           } else {
+  //             setError("An unknown error occurred.");
+  //           }
+  //           setPendingSwap(null);
+  //         } finally {
+  //           setLoading(false);
+  //         }
+  //         break;
+  //       }
 
-        case "lend":
-          response = await fetch("/api/lending", {
-            method: "GET",
-          });
-          break;
+  //       case "lend":
+  //         response = await fetch("/api/lending", {
+  //           method: "GET",
+  //         });
+  //         break;
 
-        case "trade":
-          response = await fetch("/api/trade", {
-            method: "GET",
-          });
-          break;
+  //       case "trade":
+  //         response = await fetch("/api/trade", {
+  //           method: "GET",
+  //         });
+  //         break;
 
-        case "general":
-        default:
-          response = await fetch("/api/general", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text: currentInput }),
-          });
-          break;
-      }
+  //       case "general":
+  //       default:
+  //         response = await fetch("/api/general", {
+  //           method: "POST",
+  //           headers: { "Content-Type": "application/json" },
+  //           body: JSON.stringify({ text: currentInput }),
+  //         });
+  //         break;
+  //     }
 
-      const data = await response?.json();
-      console.log({ data });
+  //     const data = await response?.json();
+  //     console.log({ data });
 
-      if (data.error) {
-        setError(data.error);
+  //     if (data.error) {
+  //       setError(data.error);
+  //       setMessages((prev) => [
+  //         ...prev,
+  //         { role: "assistant", content: `Error: ${data.error}` },
+  //       ]);
+  //       return;
+  //     }
+
+  //     // For minting, you might want to extract and show the transaction link from data.data
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       { role: "assistant", content: data.data },
+  //     ]);
+  //   } catch (err) {
+  //     setError("Failed to process request. Please try again.");
+  //     console.error("Error:", err);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  // Helper functions for each tab
+
+  // Handles the "mint" flow.
+
+  const handleMintSubmit = async (currentInput: string) => {
+    if (!address) {
+      setError(
+        "Hey there! It looks like your wallet isn't connected yet. Please connect your wallet so we can mint your NFT together."
+      );
+      setLoading(false);
+      return;
+    }
+  
+    // If an NFT image was already generated and we're waiting for confirmation...
+    if (pendingNFT) {
+      if (isConfirmation(currentInput)) {
+        // User confirmed: proceed with minting the NFT
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: `Error: ${data.error}` },
+          {
+            role: "assistant",
+            content: "Awesome! I'm minting your NFT right now. Hang tight...",
+          },
         ]);
+        const requestBody = {
+          WALLET_ADDRESS: address,
+          TOKEN_URI: pendingNFT.nftIpfsUrl,
+        };
+        const response = await fetch("/api/nft", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        // Clear the pending NFT after minting
+        setPendingNFT(null);
+        return response;
+      } else {
+        // No confirmation detected: cancel minting
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Okay, minting cancelled. If you change your mind, just let me know and we can generate another NFT image!",
+          },
+        ]);
+        setPendingNFT(null);
+        setLoading(false);
+        return;
+      }
+    } else {
+      // No pending NFT – generate the NFT image and ask for confirmation
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Great, let me create a unique NFT image for you. One moment please...",
+        },
+      ]);
+      const tokenUri = await generateImage(formatNftPrompt(currentInput));
+      console.log(tokenUri);
+      if (tokenUri?.nftIpfsUrl) {
+        setPendingNFT({ nftIpfsUrl: tokenUri.nftIpfsUrl });
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: {
+              text: "Here's your freshly generated NFT image! Do you like it? Reply with 'yes' to mint it or 'no' to cancel.",
+              imageSrc: tokenUri?.img,
+            },
+          },
+        ]);
+      } else {
+        setError("Oops, something went wrong while generating your NFT image. Please try again.");
+        setLoading(false);
+        return;
+      }
+      setLoading(false);
+      // Return early so no further processing is done until the user confirms.
+      return;
+    }
+  };
+  
+  // Handles the "swap" flow.
+  const handleSwapSubmit = async (currentInput: string) => {
+    try {
+      // Initial step: ask for private key if not set.
+      if (!privateKey) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "To proceed with the swap, I'll need your private key. Please enter it now:",
+          },
+        ]);
+        setPendingSwap({ step: "AWAIT_PRIVATE_KEY" });
         return;
       }
 
-      // For minting, you might want to extract and show the transaction link from data.data
+      // Handle private key input
+      if (pendingSwap?.step === "AWAIT_PRIVATE_KEY") {
+        const inputKey = currentInput.trim();
+        console.log("Input Private Key:", inputKey);
+        setPrivateKey(inputKey);
+
+        // Ensure state has updated before proceeding
+        setTimeout(() => {
+          if (!safeAddress) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content:
+                  "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+              },
+            ]);
+            setPendingSwap({ step: "SETUP_CONFIRMATION" });
+          }
+        }, 100);
+      }
+
+      // If no safe wallet is set and no pending swap exists, ask to set one up.
+      if (!safeAddress && !pendingSwap) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "I notice you want to swap tokens! You'll need a Safe wallet first. Would you like me to set one up for you?",
+          },
+        ]);
+        setPendingSwap({ step: "SETUP_CONFIRMATION" });
+        return;
+      }
+
+      // Setup confirmation: create a Safe wallet.
+      if (
+        !safeAddress &&
+        pendingSwap?.step === "SETUP_CONFIRMATION" &&
+        isConfirmation(currentInput)
+      ) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Creating your Safe wallet now...",
+          },
+        ]);
+        const safeResponse = await fetch("/api/setup-safe", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ SIGNER_PRIVATE_KEY: privateKey }),
+        });
+
+        if (safeResponse.status === 500) {
+          const err = await safeResponse.json();
+          console.log({ err });
+          throw new Error(err?.details || "Error creating");
+        }
+
+        const { safeAddress: newSafeAddress } = await safeResponse.json();
+        setSafeAddress(newSafeAddress);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great! I've created your Safe wallet at ${newSafeAddress}. Before we can swap, we need to deposit some ETH and approve it for trading. Should I proceed with that?`,
+          },
+        ]);
+        setPendingSwap({ step: "AWAIT_DEPOSIT_APPROVAL" });
+        return;
+      }
+
+      // Deposit and approval step
+      if (
+        pendingSwap?.step === "AWAIT_DEPOSIT_APPROVAL" &&
+        isConfirmation(currentInput)
+      ) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Processing deposit and approval...",
+          },
+        ]);
+        const approveResponse = await fetch("/api/deposit-approve-cow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            SAFE_ADDRESS: safeAddress,
+            SIGNER_PRIVATE_KEY: privateKey,
+          }),
+        });
+
+        if (!approveResponse.ok)
+          throw new Error("Failed to execute deposit and approval");
+
+        const { transactionHash, wethBalance, ethBalance } =
+          await approveResponse.json();
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Perfect! The deposit and approval are complete (tx: ${transactionHash}). Your balances are: ${ethBalance} ETH and ${wethBalance} WETH. Which token would you like to swap from? (e.g., WETH)`,
+          },
+        ]);
+        setPendingSwap({ step: "AWAIT_SELL_TOKEN", details: {} });
+        return;
+      }
+
+      // Ask for sell token
+      if (pendingSwap?.step === "AWAIT_SELL_TOKEN") {
+        const sellToken = currentInput.trim();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Got it, you want to swap from ${sellToken}. Which token would you like to swap to?`,
+          },
+        ]);
+        setPendingSwap({
+          step: "AWAIT_BUY_TOKEN",
+          details: { ...pendingSwap.details, sellToken },
+        });
+        return;
+      }
+
+      // Ask for buy token
+      if (pendingSwap?.step === "AWAIT_BUY_TOKEN") {
+        const buyToken = currentInput.trim();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great, you want to swap from ${pendingSwap?.details?.sellToken} to ${buyToken}. How much ${pendingSwap?.details?.sellToken} would you like to swap? (Enter amount)`,
+          },
+        ]);
+        setPendingSwap({
+          step: "AWAIT_AMOUNT",
+          details: { ...pendingSwap.details, buyToken },
+        });
+        return;
+      }
+
+      // Ask for amount to swap
+      if (pendingSwap?.step === "AWAIT_AMOUNT") {
+        const amount = currentInput.trim();
+        const { sellToken, buyToken } = pendingSwap?.details || {};
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `To confirm: You want to swap ${amount} ${sellToken} for ${buyToken}. Would you like to proceed with the swap?`,
+          },
+        ]);
+        setPendingSwap({
+          step: "CONFIRM_SWAP",
+          details: {
+            inputAmt: amount,
+            sellAddress: sellToken,
+            buyAddress: buyToken,
+          },
+        });
+        return;
+      }
+
+      // Execute the final swap
+      if (
+        pendingSwap?.step === "CONFIRM_SWAP" &&
+        isConfirmation(currentInput)
+      ) {
+        const { details } = pendingSwap;
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Executing your swap...",
+          },
+        ]);
+        const swapResponse = await fetch("/api/swap-cow", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            SAFE_ADDRESS: safeAddress,
+            SIGNER_PRIVATE_KEY: privateKey,
+            buyAddress: details?.buyAddress,
+            sellAddress: details?.sellAddress,
+            inputAmt: details?.inputAmt,
+          }),
+        });
+
+        if (!swapResponse.ok) throw new Error("Failed to execute swap");
+
+        const { transactionHash } = await swapResponse.json();
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great news! Your swap is complete. You can view the transaction here: ${transactionHash}`,
+          },
+        ]);
+        setPendingSwap(null);
+        return;
+      }
+    } catch (error) {
+      console.error("Swap error:", error);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.data },
+        {
+          role: "assistant",
+          content: `I apologize, but there was an error: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }. Would you like to try again?`,
+        },
       ]);
+      setError(
+        error instanceof Error ? error.message : "An unknown error occurred."
+      );
+      setPendingSwap(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handles the "lend" flow.
+  const handleLendingSubmit = async () => {
+    return await fetch("/api/lending", {
+      method: "GET",
+    });
+  };
+
+  // Handles the "trade" flow.
+  const handleTradeSubmit = async () => {
+    return await fetch("/api/trade", {
+      method: "GET",
+    });
+  };
+
+  // Handles the "general" flow.
+  const handleGeneralSubmit = async (currentInput: string) => {
+    return await fetch("/api/general", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: currentInput }),
+    });
+  };
+
+  //handles cross chain
+  const handleCrossChainSubmit = async (
+    userInput: string,
+    setMessages: (fn: (prev: any[]) => any[]) => void,
+    setState?: (state: CrossChainState) => void
+  ) => {
+    const state: CrossChainState = {
+      action: null,
+      srcChainId: "",
+      destChainId: "",
+      amount: "",
+      receivingAccountAddress: "",
+    };
+
+    const lowerInput = userInput.toLowerCase();
+
+    // Initial action determination
+    if (lowerInput.includes("send") || lowerInput.includes("transfer")) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I'll help you send tokens across chains. First, which chain would you like to send from? (Please provide the chain ID)",
+        },
+      ]);
+      state.action = "sendOFT";
+      setState?.(state);
+      return;
+    }
+
+    if (
+      lowerInput.includes("set peer") ||
+      lowerInput.includes("configure peer")
+    ) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "I'll help you set up peers between chains. What's the source chain ID?",
+        },
+      ]);
+      state.action = "setPeer";
+      setState?.(state);
+      return;
+    }
+
+    // Handle chain ID inputs
+    const chainIdMatch = userInput.match(/\d+/);
+    if (chainIdMatch && state.srcChainId === "") {
+      state.srcChainId = chainIdMatch[0];
+      if (state.action === "sendOFT") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Great, sending from chain ${state.srcChainId}. Which chain would you like to send to? (Please provide the destination chain ID)`,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Source chain ${state.srcChainId} set. What's the destination chain ID?`,
+          },
+        ]);
+      }
+      setState?.(state);
+      return;
+    }
+
+    if (chainIdMatch && state.destChainId === "") {
+      state.destChainId = chainIdMatch[0];
+      if (state.action === "sendOFT") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Perfect. How many tokens would you like to send?`,
+          },
+        ]);
+      } else {
+        // For setPeer, we can now execute
+        const confirmMessage = `I'll set up peers between chain ${state.srcChainId} and chain ${state.destChainId}. Is this correct? (yes/no)`;
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: confirmMessage,
+          },
+        ]);
+      }
+      setState?.(state);
+      return;
+    }
+
+    // Handle amount for sendOFT
+    const amountMatch = userInput.match(/(\d+(\.\d+)?)/);
+    if (state.action === "sendOFT" && amountMatch && !state.amount) {
+      state.amount = amountMatch[1];
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: `Got it. What's the receiving wallet address? (Please provide the 0x address)`,
+        },
+      ]);
+      setState?.(state);
+      return;
+    }
+
+    // Handle address for sendOFT
+    const addressMatch = userInput.match(/(0x[a-fA-F0-9]{40})/);
+    if (
+      state.action === "sendOFT" &&
+      addressMatch &&
+      !state.receivingAccountAddress
+    ) {
+      state.receivingAccountAddress = addressMatch[0];
+      const confirmMessage = `I'll send ${state.amount} tokens from chain ${state.srcChainId} to chain ${state.destChainId}, to address ${state.receivingAccountAddress}. Is this correct? (yes/no)`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: confirmMessage,
+        },
+      ]);
+      setState?.(state);
+      return;
+    }
+
+    // Handle confirmation
+    if (lowerInput === "yes" || lowerInput === "y") {
+      try {
+        const response = await fetch("/api/cross-chain", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...state,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          const successMessage =
+            state.action === "sendOFT"
+              ? `Successfully sent ${state.amount} tokens from chain ${state.srcChainId} to chain ${state.destChainId}`
+              : `Successfully set up peers between chain ${state.srcChainId} and chain ${state.destChainId}`;
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content:
+                successMessage +
+                "\n\nIs there anything else I can help you with?",
+            },
+          ]);
+        } else {
+          throw new Error(data.message || "Transaction failed");
+        }
+      } catch (error) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Error: ${
+              error instanceof Error ? error.message : "Transaction failed"
+            }`,
+          },
+        ]);
+      }
+      setState?.({
+        action: null,
+        srcChainId: "",
+        destChainId: "",
+        amount: "",
+        receivingAccountAddress: "",
+      });
+    } else if (lowerInput === "no" || lowerInput === "n") {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content:
+            "Let's start over. What would you like to do? You can send tokens or set up peers.",
+        },
+      ]);
+      setState?.({
+        action: null,
+        srcChainId: "",
+        destChainId: "",
+        amount: "",
+        receivingAccountAddress: "",
+      });
+    }
+  };
+
+  // Main handleSubmit function
+  const handleSubmit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!userInput.trim()) return;
+
+    setError("");
+    setLoading(true);
+
+    const currentInput = userInput;
+    console.log(currentInput);
+
+    // Append the user's message to the conversation and clear input.
+    setMessages((prev) => [...prev, { role: "user", content: currentInput }]);
+    setUserInput("");
+
+    let response;
+
+    try {
+      switch (activeTab) {
+        case "mint":
+          response = await handleMintSubmit(currentInput);
+          if (!response) return; // Early return if mint flow ended early
+          break;
+        case "swap":
+          // The swap function manages its own messaging and state,
+          // so we return early after handling it.
+          await handleSwapSubmit(currentInput);
+          return;
+        case "cross-chain":
+         await handleCrossChainSubmit(userInput, setMessages, setCrossChainState);
+          return; // Early return as we're handling messages in the function
+        case "lend":
+          response = await handleLendingSubmit();
+          break;
+        case "trade":
+          response = await handleTradeSubmit();
+          break;
+        case "general":
+        default:
+          response = await handleGeneralSubmit(currentInput);
+          break;
+      }
+
+      if (response) {
+        const data = await response.json();
+        console.log({ data });
+        if (data.error) {
+          setError(data.error);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: `Error: ${data.error}` },
+          ]);
+          return;
+        }
+        // For minting, you might want to extract and show the transaction link from data.data
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: data.data },
+        ]);
+      }
     } catch (err) {
       setError("Failed to process request. Please try again.");
       console.error("Error:", err);
@@ -508,6 +1150,11 @@ export default function AIAgent() {
     { id: "swap", label: "Swap", icon: <ArrowRightLeft size={20} /> },
     { id: "lend", label: "Lending", icon: <PiggyBank size={20} /> },
     { id: "trade", label: "Trading", icon: <LineChart size={20} /> },
+    {
+      id: "cross-chain",
+      label: "Cross Chain",
+      icon: <ArrowUpDown size={20} />,
+    },
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
   ];
 
@@ -594,10 +1241,11 @@ export default function AIAgent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${activeTab === tab.id
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+                activeTab === tab.id
                   ? "bg-gradient-to-r from-gray-500/20 to-black/20 text-white border border-gray-500/20 shadow-lg shadow-gray-500/5"
                   : "text-gray-300 hover:bg-gray-500/10"
-                }`}
+              }`}
             >
               {tab.icon}
               <span className="font-medium">{tab.label}</span>
@@ -649,23 +1297,27 @@ export default function AIAgent() {
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex max-w-5xl mx-auto ${message.role === "assistant" ? "justify-start" : "justify-end"
-                  }`}
+                className={`flex max-w-5xl mx-auto ${
+                  message.role === "assistant" ? "justify-start" : "justify-end"
+                }`}
               >
                 <div
-                  className={`flex max-w-4xl ${message.role === "assistant"
+                  className={`flex max-w-4xl ${
+                    message.role === "assistant"
                       ? "bg-[#212121] backdrop-blur-sm border border-gray-500/10"
                       : "bg-indigo-800 text-black backdrop-blur-sm"
-                    } p-5 rounded-2xl ${message.role === "assistant"
+                  } p-5 rounded-2xl ${
+                    message.role === "assistant"
                       ? "rounded-tl-sm"
                       : "rounded-tr-sm"
-                    } shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
+                  } shadow-lg transition-all duration-500 hover:shadow-gray-500/10`}
                 >
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${message.role === "assistant"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0 ${
+                      message.role === "assistant"
                         ? "bg-gradient-to-r from-indigo-500 to-gray-600"
                         : "bg-gradient-to-r from-black to-gray-500"
-                      }`}
+                    }`}
                   >
                     {message.role === "assistant" ? (
                       <BrainCircuit className="text-white" size={18} />
@@ -703,14 +1355,14 @@ export default function AIAgent() {
                   !isConnected
                     ? "Connect your wallet or ask general questions..."
                     : activeTab === "swap"
-                      ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
-                      : activeTab === "lend"
-                        ? "e.g., 'Find best lending rates for ETH'"
-                        : activeTab === "trade"
-                          ? "e.g., 'Analyze ETH/USDC trading opportunities'"
-                          : activeTab === "mint"
-                            ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
-                            : "Ask me anything..."
+                    ? "e.g., 'Swap 0.1 ETH to USDC with best rate'"
+                    : activeTab === "lend"
+                    ? "e.g., 'Find best lending rates for ETH'"
+                    : activeTab === "trade"
+                    ? "e.g., 'Analyze ETH/USDC trading opportunities'"
+                    : activeTab === "mint"
+                    ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
+                    : "Ask me anything..."
                 }
                 className="w-full bg-black/50 border border-gray-500/20 rounded-2xl p-4 pb-12 text-gray-100 placeholder-gray-500/50 focus:ring-2 focus:ring-gray-500/50 focus:border-transparent resize-none h-24 transition-all duration-200 focus:shadow-lg focus:shadow-gray-500/10"
               />

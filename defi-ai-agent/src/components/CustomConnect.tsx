@@ -93,6 +93,7 @@ export const CustomConnect = () => {
                     }}
                     onMouseEnter={() => setHoveredButton('wrong')}
                     onMouseLeave={() => setHoveredButton(null)}
+                    className='w-full flex items-center justify-center'
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ marginRight: '8px' }}>
                       <path d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm-1-7v2h2v-2h-2zm0-8v6h2V7h-2z" fill="#FF6B6B"/>
@@ -153,6 +154,7 @@ export const CustomConnect = () => {
                     }}
                     onMouseEnter={() => setHoveredButton('account')}
                     onMouseLeave={() => setHoveredButton(null)}
+                    className='w-full items-center flex justify-center'
                   >
                     <div 
                       style={{ 
