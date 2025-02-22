@@ -1,4 +1,4 @@
-import express, { Request, Response, Router } from 'express'
+import { Request, Response, Router } from 'express'
 import { Options } from '@layerzerolabs/lz-v2-utilities'
 import { waitForMessageReceived } from '@layerzerolabs/scan-client'
 import { zeroPad } from '@ethersproject/bytes'
@@ -18,7 +18,6 @@ if (!process.env.DEPLOYER_ACCOUNT_PRIV_KEY) {
     console.error('❌ Missing DEPLOYER_ACCOUNT_PRIV_KEY in environment variables.')
     process.exit(1)
 }
-
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
 const signer = new ethers.Wallet(process.env.DEPLOYER_ACCOUNT_PRIV_KEY, provider)
 
@@ -26,7 +25,6 @@ const getContractInstance = (contractAddress: any, contractABI: any) => {
     console.log('✅ Contract Address:', contractAddress)
     return new ethers.Contract(contractAddress, contractABI, signer)
 }
-
 
 router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const { srcChainId, destChainId, amount, receivingAccountAddress } = req.body
@@ -60,7 +58,7 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const receiverAddressInBytes32 = zeroPad(receivingAccountAddress, 32)
     const adapterContractInstance = getContractInstance(oftAdapterContractAddress, AdapterABI as any)
     const customTokenContractInstance = getContractInstance(erc20TokenAddress, CustomTokenABI as any)
-    console.log('✅ Contracts Initialized!',customTokenContractInstance)
+    console.log('✅ Contracts Initialized!', customTokenContractInstance)
     const amountInWei = ethers.parseEther(amount.toString())
 
     console.log(
@@ -111,8 +109,8 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     res.json({
         message: 'Success',
         data: {
-            receipt : sendTxReceipt,
-            message:"sendOFT - received tx on destination chain",
+            receipt: sendTxReceipt,
+            message: 'sendOFT - received tx on destination chain',
         },
     })
     return
