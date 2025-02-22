@@ -31,7 +31,7 @@ import { formatNftPrompt } from "@/utils/prompt";
 import { CustomConnect } from "./CustomConnect";
 
 type TabType = "general" | "swap" | "lend" | "trade" | "mint" | "cross-chain";
-type Chain = "arbitrum" | "optimism" | "base" | "ethereum";
+type Chain = "arbitrum" | "mantle" | "sonic" | "sepolia";
 
 export default function AIAgent() {
   const [loading, setLoading] = useState(false);
@@ -543,6 +543,7 @@ export default function AIAgent() {
         const requestBody = {
           WALLET_ADDRESS: address,
           TOKEN_URI: pendingNFT.nftIpfsUrl,
+          chainId: selectedChain,
         };
         const response = await fetch("/api/nft", {
           method: "POST",
