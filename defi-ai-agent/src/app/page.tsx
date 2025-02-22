@@ -39,7 +39,7 @@ export default function Home() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme({accentColor:"#ffffff"})} modalSize="wide">
+        <RainbowKitProvider theme={darkTheme({accentColor:"#372fa3"})} modalSize="wide">
           <AIAgent />
         </RainbowKitProvider>
       </QueryClientProvider>
