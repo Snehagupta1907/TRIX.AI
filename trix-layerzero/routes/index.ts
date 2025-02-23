@@ -7,7 +7,7 @@ import { deploymentConfig } from '../deployment_config'
 
 import dotenv from 'dotenv'
 dotenv.config()
-import { AdapterABI, CustomTokenABI, OftABI } from '../constant'
+import { AdapterABI, CustomTokenABI, OftABI, ConversionAbi, ConversionAddress } from '../constant'
 const router = Router()
 
 if (!process.env.RPC_URL) {
@@ -26,6 +26,78 @@ const getContractInstance = (contractAddress: any, contractABI: any) => {
     console.log('✅ Contract Address:', contractAddress)
     return new ethers.Contract(contractAddress, contractABI, signer)
 }
+
+router.post('/convertSToDesiredToken', async (req: Request, res: Response): Promise<void> => {
+    const { tokenId, amount } = req.body
+    console.log('convert - req.body:', tokenId)
+    if (!amount) {
+        res.status(400).json({
+            message: 'Bad Request',
+            data: 'tokenId, amount are required',
+        })
+        return
+    }
+    const conversionContractInstance = getContractInstance(ConversionAddress, ConversionAbi as any)
+    console.log('✅ Contracts Initialized!', conversionContractInstance)
+    const amountInWei = ethers.parseEther(amount.toString())
+    console.log('convert - amountInWei:', amountInWei)
+    console.log('convert - tokenId:', tokenId)
+    try {
+        const tx = await conversionContractInstance.convertSToDesiredToken(tokenId, {
+            value: amountInWei,
+        })
+        const txReceipt = await tx.wait()
+        console.log('convert - tx:', txReceipt?.hash)
+        res.status(200).json({
+            message: 'Success',
+            data: {
+                receipt: txReceipt,
+                message: 'convert - tx',
+                url: `https://testnet.sonicscan.org/tx/${txReceipt?.hash}`,
+            },
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: 'Internal Server Error',
+            data: error,
+        })
+    }
+})
+
+router.post('/convertDesiredTokenToS', async (req: Request, res: Response): Promise<void> => {
+    const { tokenId, amount } = req.body
+    console.log('convert - req.body:', req.body)
+    if (!amount) {
+        res.status(400).json({
+            message: 'Bad Request',
+            data: 'tokenId, amount are required',
+        })
+        return
+    }
+    const conversionContractInstance = getContractInstance(ConversionAddress, ConversionAbi as any)
+    console.log('✅ Contracts Initialized!', conversionContractInstance)
+    const amountInWei = ethers.parseEther(amount.toString())
+    console.log('convert - amountInWei:', amountInWei)
+    console.log('convert - tokenId:', tokenId)
+    try {
+        const tx = await conversionContractInstance.convertDesiredTokenToS(tokenId,amountInWei)
+        const txReceipt = await tx.wait()
+        console.log('convert - tx:', txReceipt?.hash)
+        res.status(200).json({
+            message: 'Success',
+            data: {
+                receipt: txReceipt,
+                message: 'convert - tx',
+                url: `https://testnet.sonicscan.org/tx/${txReceipt?.hash}`,
+            },
+        })
+    } catch (error) {
+        res.status(500).json({
+            message: 'Internal Server Error',
+            data: error,
+        })
+    }
+})
 
 router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const { srcChainId, destChainId, amount, receivingAccountAddress } = req.body
@@ -116,7 +188,7 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
             data: {
                 receipt: sendTxReceipt,
                 message: 'sendOFT - received tx on destination chain',
-                url:`https://testnet.layerzeroscan.com/tx/${sendTxReceipt?.hash}`
+                url: `https://testnet.layerzeroscan.com/tx/${sendTxReceipt?.hash}`,
             },
         })
     } catch (error) {
