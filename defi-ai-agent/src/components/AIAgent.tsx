@@ -44,7 +44,7 @@ export default function AIAgent() {
 
   const [userInput, setUserInput] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("general");
-  const [selectedChain, setSelectedChain] = useState<Chain>("arbitrum");
+  const [selectedChain, setSelectedChain] = useState<Chain>("sonic");
   const [error, setError] = useState("");
   // NEW: State to hold the NFT data waiting for confirmation
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
@@ -116,7 +116,7 @@ export default function AIAgent() {
     return confirmations.some((phrase) => text.toLowerCase().includes(phrase));
   };
 
-  console.log(pendingSwap, safeAddress, privateKey);
+  // console.log(pendingSwap, safeAddress, privateKey);
 
   
   const handleMintSubmit = async (currentInput: string) => {
