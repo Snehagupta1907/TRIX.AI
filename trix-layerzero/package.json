@@ -1,5 +1,5 @@
 {
-  "name": "@layerzerolabs/oft-example",
+  "name": "layerzer-backend",
   "version": "0.2.14",
   "private": true,
   "license": "MIT",
@@ -12,10 +12,7 @@
     "lint": "$npm_execpath run lint:js && $npm_execpath run lint:sol",
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:js": "eslint '**/*.{js,ts,json}' && prettier --check .",
-    "lint:sol": "solhint 'contracts/**/*.sol'",
-    "test": "$npm_execpath run test:forge && $npm_execpath run test:hardhat",
-    "test:forge": "forge test",
-    "test:hardhat": "hardhat test"
+    "lint:sol": "solhint 'contracts/**/*.sol'"
   },
   "resolutions": {
     "ethers": "^5.7.2",

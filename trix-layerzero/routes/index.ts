@@ -27,6 +27,12 @@ const getContractInstance = (contractAddress: any, contractABI: any) => {
     return new ethers.Contract(contractAddress, contractABI, signer)
 }
 
+router.get('/', (req: Request, res: Response): void => {
+    res.status(200).json({
+        message: 'Hey welcome to layer zero apis',
+    })
+})
+
 router.post('/convertSToDesiredToken', async (req: Request, res: Response): Promise<void> => {
     const { tokenId, amount } = req.body
     console.log('convert - req.body:', tokenId)
