@@ -3,11 +3,11 @@ import { defaultAbiCoder } from '@ethersproject/abi'
 const endpointAbi = [
     'function setConfig(address oappAddress, address sendLibAddress, tuple(uint32 eid, uint32 configType, bytes config)[] setConfigParams) external',
 ]
-const YOUR_OAPP_ADDRESS = '0xBFff78BB02925E4D8671D0d90B2a6330fcAedd87'
-const YOUR_SEND_LIB_ADDRESS = '0xd682ECF100f6F4284138AA925348633B0611Ae21'
-const YOUR_ENDPOINT_CONTRACT_ADDRESS = '0x6C7Ab2202C98C4227C5c46f1417D81144DA716Ff'
-const YOUR_RECEIVE_LIB_ADDRESS = '0xcF1B0F4106B0324F96fEfcC31bA9498caa80701C'
-const remoteEid = 40349
+const YOUR_OAPP_ADDRESS = '0x5c7176e3e2511577E495AE8872EB1a84fD7959E1'
+const YOUR_SEND_LIB_ADDRESS = '0x55f16c442907e86D764AFdc2a07C2de3BdAc8BB7'
+const YOUR_ENDPOINT_CONTRACT_ADDRESS = '0x6EDCE65403992e310A62460808c4b910D972f10f'
+const YOUR_RECEIVE_LIB_ADDRESS = '0x188d4bbCeD671A7aA2b5055937F79510A32e9683'
+const remoteEid = 40102
 
 const ulnConfig = {
     confirmations: 99, // Example value, replace with actual

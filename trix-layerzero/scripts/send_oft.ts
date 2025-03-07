@@ -44,9 +44,9 @@ async function sendOFT(
     const sender = new ethers.Wallet(sendingAccountPrivKey, ethers.provider)
     const chainId = +(await ethers.provider.getNetwork().then((res) => res.chainId)).toString()
     const oftAdapterContractAddress = deploymentConfig[chainId].adapterAddress
-    const oftContractAddress = deploymentConfig[97].oft_address
+    const oftContractAddress = deploymentConfig[17000].oft_address
     const lzEndpointIdOnSrcChain = deploymentConfig[chainId].lzEndpointId
-    const lzEndpointIdOnDestChain = deploymentConfig[97].lzEndpointId
+    const lzEndpointIdOnDestChain = deploymentConfig[17000].lzEndpointId
     const erc20TokenAddress = deploymentConfig[chainId].zeUSDAddress
     console.log(
         `sendOFT - oftAdapterContractAddress:${oftAdapterContractAddress}, oftContractAddress:${oftContractAddress}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, gasDropInWeiOnDestChain:${gasDropInWeiOnDestChain}, executorLzReceiveOptionMaxGas:${executorLzReceiveOptionMaxGas}, receivingAccountAddress:${receivingAccountAddress}, sender: ${sender.address}, amount:${amount}, erc20TokenAddress:${erc20TokenAddress}`

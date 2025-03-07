@@ -33,6 +33,23 @@ const CHAIN_CONFIG: any = {
 
         confirmationsOnCurrentChain: 0, // will get default confirmations
     },
+    MANTLE_SEPOLIA: {
+        lzEndpointOnCurrentChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
+        lzEndpointIdOnCurrentChain: 40245,
+
+        // https://docs.layerzero.network/v2/developers/evm/technical-reference/dvn-addresses#layerzero-labs
+        requiredDVNsOnCurrentChain: [
+            '0xe1a12515f9ab2764b887bf60b923ca494ebbb2d6', // LayerZero Labs
+        ],
+        optionalDVNsOnCurrentChain: [], // if specifying optional DVN, the setConfig tx will get reverted, why?
+
+        // From the deployed endpoint, take the SendLib302 and ReceiveLib302
+        // https://docs.layerzero.network/v2/developers/evm/technical-reference/deployed-contracts
+        sendLibAddressOnCurrentChain: '0xC1868e054425D378095A003EcbA3823a5D0135C9',
+        receiveLibAddressOnCurrentChain: '0x12523de19dc41c91F7d2093E0CFbB76b17012C8d',
+
+        confirmationsOnCurrentChain: 0, // will get default confirmations
+    },
 }
 
 const PATHWAY_CONFIG = (srcChain: string, destChain: string) => {

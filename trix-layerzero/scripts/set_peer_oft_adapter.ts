@@ -6,8 +6,8 @@ async function setPeerMyOFTAdapter() {
     const OFTAdapter_CONTRACT_NAME = 'LZ_Adapter'
     const chainId = +(await ethers.provider.getNetwork().then((res) => res.chainId)).toString()
     const oftAdapterContractAddress = deploymentConfig[chainId].adapterAddress
-    const lzEndpointIdOnDestChain = deploymentConfig[97].lzEndpointId
-    const oftContractAddress = deploymentConfig[97].oft_address
+    const lzEndpointIdOnDestChain = deploymentConfig[17000].lzEndpointId
+    const oftContractAddress = deploymentConfig[17000].oft_address
     console.log(
         `setPeerMyOFTAdapter - oftAdapterContractAddress:${oftAdapterContractAddress}, lzEndpointIdOnDestChain:${lzEndpointIdOnDestChain}, oftContractAddress:${oftContractAddress}`
     )

@@ -107,6 +107,11 @@ module.exports = {
             url: 'https://bsc-testnet.bnbchain.org/',
             accounts: ACCOUNTS,
         },
+        mantleSepolia: {
+            chainId: 5003,
+            url: 'https://rpc.sepolia.mantle.xyz',
+            accounts: ACCOUNTS,
+        },
     },
     etherscan: {
         apiKey: {

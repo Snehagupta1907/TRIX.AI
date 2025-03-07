@@ -35,4 +35,13 @@ export const deploymentConfig = {
         lzEndpointOnSrcChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
         lzEndpointId: '40102',
     },
+    5003: {
+        network: 'mantle-sepolia-testnet',
+        chainId: 5003,
+        zeUSDAddress: '0xBFff78BB02925E4D8671D0d90B2a6330fcAedd87',
+        adapterAddress: '0xe557A8e6784C9983b49593cfEC231f97b6A25455',
+        oft_address: '',
+        lzEndpointOnSrcChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
+        lzEndpointId: '40246',
+    },
 }

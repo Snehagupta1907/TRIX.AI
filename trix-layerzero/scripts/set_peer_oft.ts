@@ -5,9 +5,9 @@ import { deploymentConfig } from '../deployment_config'
 async function setPeerMyOFT() {
     const OFT_CONTRACT_NAME = 'CustomToken_OFT'
     const chainId = +(await ethers.provider.getNetwork().then((res) => res.chainId)).toString()
-    const lzEndpointIdOnSrcChain = deploymentConfig[57054].lzEndpointId
+    const lzEndpointIdOnSrcChain = deploymentConfig[5003].lzEndpointId
     const oftContractAddress = deploymentConfig[chainId].oft_address
-    const oftAdapterContractAddress = deploymentConfig[57054].adapterAddress
+    const oftAdapterContractAddress = deploymentConfig[5003].adapterAddress
     console.log(
         `setPeerMyOFT - oftContractAddress:${oftContractAddress}, lzEndpointIdOnSrcChain:${lzEndpointIdOnSrcChain}, oftAdapterContractAddress:${oftAdapterContractAddress}`
     )
