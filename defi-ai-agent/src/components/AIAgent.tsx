@@ -570,7 +570,7 @@ export default function AIAgent() {
           inputData = userInput; // Already an object, no need to parse
         } else {
           try {
-            let formattedInput = userInput
+            const formattedInput = userInput
             .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":') // Wraps object keys in double quotes
             .replace(/:\s*([a-zA-Z_][\w]*)\s*([,}])/g, ':"$1"$2') // Wraps unquoted string values in double quotes
             .replace(/,\s*}/g, '}') // Removes trailing commas before }
