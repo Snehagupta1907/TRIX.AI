@@ -4,7 +4,7 @@ export const deploymentConfig = {
         chainId: 84532,
         zeUSDAddress: '0x4801E23D9aBeA9e18538eBF95631BE0724eC148f',
         adapterAddress: '0xA99bFF98db7A93A40935D85E5F5A2D4E99CF47d8',
-        oft_address: '',
+        oft_address: '0x693F0A106127fd4bdA6D116b03235dAc4B388733',
         lzEndpointOnSrcChain: '0x6EDCE65403992e310A62460808c4b910D972f10f',
         lzEndpointId: '40245',
     },

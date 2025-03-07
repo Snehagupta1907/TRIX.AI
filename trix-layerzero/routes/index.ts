@@ -132,7 +132,7 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
     const receiverAddressInBytes32 = zeroPad(receivingAccountAddress, 32)
     const adapterContractInstance = getContractInstance(oftAdapterContractAddress, AdapterABI as any)
     const customTokenContractInstance = getContractInstance(erc20TokenAddress, CustomTokenABI as any)
-    console.log('✅ Contracts Initialized!', customTokenContractInstance)
+
     const amountInWei = ethers.parseEther(amount.toString())
 
     console.log(
@@ -160,7 +160,6 @@ router.post('/sendOFT', async (req: Request, res: Response): Promise<void> => {
         '0x', // OFT command to be executed, unused in default OFT implementations
     ]
 
-    console.log('sendOFT - sendParam:', sendParam)
     try {
         const [nativeFee] = await adapterContractInstance.quoteSend(sendParam, false)
         console.log('sendOFT - estimated nativeFee:', ethers.formatEther(nativeFee))
