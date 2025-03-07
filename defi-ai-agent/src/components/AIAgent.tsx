@@ -16,6 +16,7 @@ import {
   User,
   Bot,
   ArrowUpDown,
+  Code2Icon,
 } from "lucide-react";
 import ResponseDisplay from "./ResponseDisplay";
 
@@ -919,6 +920,11 @@ export default function AIAgent() {
 
   const tabs: { id: TabType; label: string; icon: React.ReactNode }[] = [
     { id: "general", label: "General", icon: <BrainCircuit size={20} /> },
+    {
+      id: "generate",
+      label: "Coding Helper",
+      icon: <Code2Icon size={20} />,
+    },
     { id: "swap", label: "Swap", icon: <ArrowRightLeft size={20} /> },
     { id: "lend", label: "Lending", icon: <PiggyBank size={20} /> },
     { id: "trade", label: "Trading", icon: <LineChart size={20} /> },
@@ -928,11 +934,7 @@ export default function AIAgent() {
       icon: <ArrowUpDown size={20} />,
     },
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
-    {
-      id: "generate",
-      label: "Generate Integration Function",
-      icon: <ImagePlay size={20} />,
-    },
+
   ];
 
   const visibleTabs = isConnected
@@ -1019,7 +1021,7 @@ export default function AIAgent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all whitespace-nowrap duration-300 ${
                 activeTab === tab.id
                   ? "bg-gradient-to-r from-gray-500/20 to-black/20 text-white border border-gray-500/20 shadow-lg shadow-gray-500/5"
                   : "text-gray-300 hover:bg-gray-500/10"
