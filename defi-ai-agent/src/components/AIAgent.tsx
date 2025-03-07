@@ -543,9 +543,7 @@ export default function AIAgent() {
 
       if (generateCommand) {
         setGenerateCommand(false); // Reset flag after processing
-
         let inputData;
-
         console.log(userInput, "userInput");
         if (typeof userInput === "object") {
           inputData = userInput; // Already an object or array, use it directly
