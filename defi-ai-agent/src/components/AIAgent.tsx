@@ -493,25 +493,6 @@ export default function AIAgent() {
 
     // Generate function template
     const functionCode = `
-  import { ethers } from "ethers";
-  import toast from "react-hot-toast";
-
-   const getContractInstance = async (
-    contractAddress: string,
-    contractAbi: any
-  ): Promise<Contract | undefined> => {
-    try {
-      const contractInstance = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        signer
-      );
-      return contractInstance;
-    } catch (error) {
-      console.log("Error in deploying contract");
-      return undefined;
-    }
-  };
   
   const ${name} = async (${paramNames}) => {
     let id = toast.loading("Processing ${name}...");
@@ -559,24 +540,32 @@ export default function AIAgent() {
       }
 
       // Step 2: User provides JSON input
+
       if (generateCommand) {
         setGenerateCommand(false); // Reset flag after processing
 
         let inputData;
 
-        console.log(userInput, "userINout");
+        console.log(userInput, "userInput");
         if (typeof userInput === "object") {
-          inputData = userInput; // Already an object, no need to parse
+          inputData = userInput; // Already an object or array, use it directly
         } else {
           try {
             let formattedInput = userInput
-            .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":') // Wraps object keys in double quotes
-            .replace(/:\s*([a-zA-Z_][\w]*)\s*([,}])/g, ':"$1"$2') // Wraps unquoted string values in double quotes
-            .replace(/,\s*}/g, '}') // Removes trailing commas before }
-            .replace(/,\s*]/g, ']') // Removes trailing commas before ]
-        
-          console.log("Formatted JSON String:", formattedInput);
+              .trim() // Remove leading/trailing spaces
+              .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":') // Wraps object keys in double quotes
+              .replace(/:\s*([a-zA-Z_][\w]*)\s*([,}\]])/g, ':"$1"$2') // Wraps unquoted string values in double quotes
+              .replace(/,\s*}/g, "}") // Removes trailing commas before }
+              .replace(/,\s*]/g, "]"); // Removes trailing commas before ]
+
+            console.log("Formatted JSON String:", formattedInput);
+
             inputData = JSON.parse(formattedInput);
+
+            // Ensure parsed input is an array
+            if (!Array.isArray(inputData)) {
+              inputData = [inputData]; // Convert single object to array
+            }
           } catch (error) {
             setMessages((prev) => [
               ...prev,
@@ -591,32 +580,61 @@ export default function AIAgent() {
           }
         }
 
-        // Validate required fields in ABI
-        if (!inputData.name || !inputData.inputs) {
-          setMessages((prev) => [
-            ...prev,
-            {
-              role: "assistant",
-              content: "Invalid ABI format: Missing 'name' or 'inputs' field.",
-            },
-          ]);
-          return;
+        // Ensure input is an array (if it's a single function, wrap it in an array)
+        if (!Array.isArray(inputData)) {
+          inputData = [inputData];
         }
 
-        // Generate function using ABI
-        const generatedFunction = generateIntegrationFunction(inputData);
+        console.log(inputData, "Arreay");
+        for (const func of inputData) {
+          if (!func.name || !func.inputs) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content: `Invalid ABI format: Function '${
+                  func.name || "unknown"
+                }' is missing 'name' or 'inputs' field.`,
+              },
+            ]);
+            return;
+          }
+        }
+
+        const startingText = `  import { ethers } from "ethers";
+  import toast from "react-hot-toast";
+
+   const getContractInstance = async (
+    contractAddress: string,
+    contractAbi: any
+  ): Promise<Contract | undefined> => {
+    try {
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
+      );
+      return contractInstance;
+    } catch (error) {
+      console.log("Error in deploying contract");
+      return undefined;
+    }
+  };`;
+        // Generate function(s) using ABI
+        const generatedFunctions = inputData
+          .map((func) => generateIntegrationFunction(func))
+          .join("\n\n");
+
+        // Combine the startingText with the generated functions
+        const finalOutput = `${startingText}\n\n${generatedFunctions}`;
 
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content:
-              "Generated function:\n```javascript\n" +
-              generatedFunction +
-              "\n```",
+            content: `Generated functions:\n\`\`\`javascript\n${finalOutput}\n\`\`\``,
           },
         ]);
-        return;
       }
 
       // If the input is neither the command nor a valid JSON
