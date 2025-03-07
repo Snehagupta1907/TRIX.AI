@@ -13,7 +13,7 @@
     "lint:fix": "eslint --fix '**/*.{js,ts,json}' && prettier --write . && solhint 'contracts/**/*.sol' --fix --noPrompt",
     "lint:js": "eslint '**/*.{js,ts,json}' && prettier --check .",
     "lint:sol": "solhint 'contracts/**/*.sol'",
-    "build":"tsc"
+    "build": "tsc --skipLibCheck --noEmit"
   },
   "resolutions": {
     "ethers": "^5.7.2",

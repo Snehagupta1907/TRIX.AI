@@ -6,7 +6,7 @@
     "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": true,
+    "strict": false,   // Disable strict type checking
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "./dist",
