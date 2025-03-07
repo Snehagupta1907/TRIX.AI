@@ -9,7 +9,7 @@ async function getTradingData() {
     const response = await fetch('https://api.llama.fi/overview/dexs');
     const dexData = await response.json();
     return dexData.filter((dex: any) =>
-      dex.chain?.toLowerCase().includes("arbitrum")
+      dex.chain?.toLowerCase().includes("mantle")
     );
   } catch (error) {
     console.error('DefiLlama Trading API Error:', error);

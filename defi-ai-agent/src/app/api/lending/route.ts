@@ -18,8 +18,8 @@ async function getLendingProtocols() {
         ? protocol.chains.map((chain: string) => chain.toLowerCase())
         : [];
       const isArbitrum =
-        chainStr.includes("arbitrum") ||
-        chainsArray.some((chain: string) => chain.includes("arbitrum"));
+        chainStr.includes("mantle") ||
+        chainsArray.some((chain: string) => chain.includes("mantle"));
 
       const isLending = protocol.category?.toLowerCase().includes("lending");
       return isArbitrum && isLending && protocol.tvl;
