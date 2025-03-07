@@ -30,8 +30,15 @@ import { generateImage } from "@/utils/img-gen";
 import { formatNftPrompt } from "@/utils/prompt";
 import { CustomConnect } from "./CustomConnect";
 
-type TabType = "general" | "swap" | "lend" | "trade" | "mint" | "cross-chain";
-type Chain = "sonic"
+type TabType =
+  | "general"
+  | "swap"
+  | "lend"
+  | "trade"
+  | "mint"
+  | "cross-chain"
+  | "generate";
+type Chain = "sonic";
 
 export default function AIAgent() {
   const [loading, setLoading] = useState(false);
@@ -50,6 +57,8 @@ export default function AIAgent() {
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
     null
   );
+
+  const [generateCommand, setGenerateCommand] = useState(false);
 
   const [crossChainState, setCrossChainState] = useState<CrossChainState>({
     action: null,
@@ -118,7 +127,6 @@ export default function AIAgent() {
 
   // console.log(pendingSwap, safeAddress, privateKey);
 
-  
   const handleMintSubmit = async (currentInput: string) => {
     if (!address) {
       setError(
@@ -469,6 +477,166 @@ export default function AIAgent() {
       body: JSON.stringify({ text: currentInput }),
     });
   };
+  type AbiFunction = {
+    inputs: { internalType: string; name: string; type: string }[];
+    name: string;
+    outputs: { internalType: string; name: string; type: string }[];
+    stateMutability: "pure" | "view" | "nonpayable" | "payable";
+    type: "function";
+  };
+
+  const generateIntegrationFunction = (abiFunction: AbiFunction) => {
+    const { name, inputs, stateMutability } = abiFunction;
+
+    // Extract parameter names
+    const paramNames = inputs.map((input) => input.name).join(", ");
+
+    // Generate function template
+    const functionCode = `
+  import { ethers } from "ethers";
+  import toast from "react-hot-toast";
+
+   const getContractInstance = async (
+    contractAddress: string,
+    contractAbi: any
+  ): Promise<Contract | undefined> => {
+    try {
+      const contractInstance = new ethers.Contract(
+        contractAddress,
+        contractAbi,
+        signer
+      );
+      return contractInstance;
+    } catch (error) {
+      console.log("Error in deploying contract");
+      return undefined;
+    }
+  };
+  
+  const ${name} = async (${paramNames}) => {
+    let id = toast.loading("Processing ${name}...");
+    try {
+      const contract = await getContractInstance(
+        Addresses[activeChain]?.mainContractAddress,
+        mainContractABI
+      );
+  
+      if (contract) {
+        const tx = await contract.${name}(${paramNames});
+        ${
+          stateMutability !== "view" && stateMutability !== "pure"
+            ? "await tx.wait();"
+            : ""
+        }
+        toast.success("${name} executed successfully!", { id });
+      }
+    } catch (error) {
+      toast.error("Error in ${name}", { id });
+      console.error("${name} Error:", error);
+    }
+  };
+  export default ${name};
+  `;
+
+    return functionCode;
+  };
+
+  const handleGenerateSubmit = async (
+    userInput: string,
+    setMessages: (fn: (prev: any[]) => any[]) => void
+  ) => {
+    try {
+      const lowerInput = userInput.trim().toLowerCase();
+
+      // Step 1: User enters "generate_function"
+      if (lowerInput === "generate_function") {
+        setGenerateCommand(true); // Set flag to expect ABI JSON next
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: "Please provide the ABI JSON string." },
+        ]);
+        return;
+      }
+
+      // Step 2: User provides JSON input
+      if (generateCommand) {
+        setGenerateCommand(false); // Reset flag after processing
+
+        let inputData;
+
+        console.log(userInput, "userINout");
+        if (typeof userInput === "object") {
+          inputData = userInput; // Already an object, no need to parse
+        } else {
+          try {
+            let formattedInput = userInput
+            .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":') // Wraps object keys in double quotes
+            .replace(/:\s*([a-zA-Z_][\w]*)\s*([,}])/g, ':"$1"$2') // Wraps unquoted string values in double quotes
+            .replace(/,\s*}/g, '}') // Removes trailing commas before }
+            .replace(/,\s*]/g, ']') // Removes trailing commas before ]
+        
+          console.log("Formatted JSON String:", formattedInput);
+            inputData = JSON.parse(formattedInput);
+          } catch (error) {
+            setMessages((prev) => [
+              ...prev,
+              {
+                role: "assistant",
+                content:
+                  "Invalid JSON format. Please provide a valid ABI JSON.",
+              },
+            ]);
+            console.log(error);
+            return;
+          }
+        }
+
+        // Validate required fields in ABI
+        if (!inputData.name || !inputData.inputs) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: "Invalid ABI format: Missing 'name' or 'inputs' field.",
+            },
+          ]);
+          return;
+        }
+
+        // Generate function using ABI
+        const generatedFunction = generateIntegrationFunction(inputData);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Generated function:\n```javascript\n" +
+              generatedFunction +
+              "\n```",
+          },
+        ]);
+        return;
+      }
+
+      // If the input is neither the command nor a valid JSON
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Unknown command. Please enter 'generate_function' first.",
+        },
+      ]);
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Error processing input. Please try again.",
+        },
+      ]);
+    }
+  };
 
   //handles cross chain
   const handleCrossChainSubmit = async (
@@ -708,6 +876,9 @@ export default function AIAgent() {
         case "trade":
           response = await handleTradeSubmit();
           break;
+        case "generate":
+          response = await handleGenerateSubmit(userInput, setMessages);
+          break;
         case "general":
         default:
           response = await handleGeneralSubmit(currentInput);
@@ -757,6 +928,11 @@ export default function AIAgent() {
       icon: <ArrowUpDown size={20} />,
     },
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
+    {
+      id: "generate",
+      label: "Generate Integration Function",
+      icon: <ImagePlay size={20} />,
+    },
   ];
 
   const visibleTabs = isConnected
@@ -809,7 +985,7 @@ export default function AIAgent() {
         </div>
 
         {isConnected && (
-          <div className="my-6 bg-gray-900/10 p-4 rounded-xl border border-gray-500/20">
+          <div className="my-0 mb-4 bg-gray-900/10 p-4  rounded-xl border border-gray-500/20">
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Choose Network
             </label>
@@ -964,6 +1140,8 @@ export default function AIAgent() {
                     ? "e.g., 'Analyze ETH/USDC trading opportunities'"
                     : activeTab === "mint"
                     ? "e.g., 'Create cosmic galaxy NFT with gray theme'"
+                    : activeTab === "generate"
+                    ? "e.g., 'Generate your any abi function signature into integration function'"
                     : "Ask me anything..."
                 }
                 className="w-full bg-black/50 border border-gray-500/20 rounded-2xl p-4 pb-12 text-gray-100 placeholder-gray-500/50 focus:ring-2 focus:ring-gray-500/50 focus:border-transparent resize-none h-24 transition-all duration-200 focus:shadow-lg focus:shadow-gray-500/10"
