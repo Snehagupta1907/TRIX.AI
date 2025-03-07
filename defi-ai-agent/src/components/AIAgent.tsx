@@ -765,7 +765,7 @@ export default function AIAgent() {
 
   const chains = [
     // { id: "arbitrum", label: "Arbitrum" },
-    // { id: "mantle-sepolia", label: "Mantle Sepolia" },
+    { id: "mantle-sepolia", label: "Mantle Sepolia" },
     { id: "sonic", label: "Sonic Blaze Testnet" },
   ];
 

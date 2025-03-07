@@ -8,6 +8,8 @@ import { http } from "viem";
 import AIAgent from "@/components/AIAgent";
 import {  getDefaultConfig, darkTheme, RainbowKitProvider } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
+import { mantleSepoliaTestnet } from "viem/chains";
+
 
 const sonicBlazeTestnet = {
   id: 57054,
@@ -25,10 +27,10 @@ const sonicBlazeTestnet = {
 const config = getDefaultConfig({
   appName: "RainbowKit demo",
   projectId: "6780ea76605adb8e2893655e41c392a3",
-  chains: [sonicBlazeTestnet],
+  chains: [sonicBlazeTestnet,mantleSepoliaTestnet],
   transports: {
     // [arbitrumSepolia.id]: http(),
-    // [mantleSepoliaTestnet.id]: http(),
+    [mantleSepoliaTestnet.id]: http(),
     [sonicBlazeTestnet.id]: http(),
   },
 });

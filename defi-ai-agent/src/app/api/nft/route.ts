@@ -4,12 +4,12 @@ import { ethers } from "ethers";
 import { AINFT_ADDRESS_MAP } from "@/lib/constants";
 import { AINFT_ABI } from "@/lib/abi";
 
-type Chain = "arbitrum" | "mantle" | "sonic" | "sepolia";
+type Chain = "arbitrum" | "mantle-sepolia" | "sonic" | "sepolia";
 
 
 const RPC_URL_MAP: Record<Chain, string> = {
   arbitrum: "https://arb1.arbitrum.io/rpc", // Sample endpoint for Arbitrum
-  mantle: "https://endpoints.omniatech.io/v1/mantle/sepolia/public", // Sample endpoint for Mantle
+  "mantle-sepolia": "https://endpoints.omniatech.io/v1/mantle/sepolia/public", // Sample endpoint for Mantle
   sonic: "https://sonic.rpc.endpoint", // Replace with the actual Sonic RPC endpoint
   sepolia: "https://sepolia.rpc.endpoint", // Replace with the actual Sepolia RPC endpoint
 };
@@ -17,7 +17,7 @@ const RPC_URL_MAP: Record<Chain, string> = {
 
 const EXPLORER_URL_MAP: Record<Chain, string> = {
   arbitrum: "https://arbiscan.io/tx/",
-  mantle: "https://explorer.mantle.xyz/tx/",
+  "mantle-sepolia": "https://explorer.sepolia.mantle.xyz/tx/",
   sonic: "https://explorer.sonic.io/tx/",
   sepolia: "https://sepolia.etherscan.io/tx/",
 };

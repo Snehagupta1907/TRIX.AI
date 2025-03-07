@@ -16,12 +16,16 @@ app.use(cors(corsOptions))
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
-const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minutes
-    max: 2, // Limit each IP to 100 requests per windowMs
-    message: 'Too many requests,2 req/minute allowed',
-})
-app.use(limiter)
+// const limiter = rateLimit({
+//     windowMs: 60 * 1000, // 1 minutes
+//     max: 2, // Limit each IP to 100 requests per windowMs
+//     message: 'Too many requests,2 req/minute allowed',
+// })
+
+// app.use(limiter)
+app.get("/",async (req,res)=>{
+    res.send("Hello World")
+});
 app.use('/api', router)
 
 app.listen(process.env.PORT ? process.env.PORT : 3000, function () {
