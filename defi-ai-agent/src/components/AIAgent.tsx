@@ -515,9 +515,7 @@ export default function AIAgent() {
       toast.error("Error in ${name}", { id });
       console.error("${name} Error:", error);
     }
-  };
-  export default ${name};
-  `;
+  };`;
 
     return functionCode;
   };
@@ -542,7 +540,7 @@ export default function AIAgent() {
       // Step 2: User provides JSON input
 
       if (generateCommand) {
-        setGenerateCommand(false); // Reset flag after processing
+        // Reset flag after processing
         let inputData;
         console.log(userInput, "userInput");
         if (typeof userInput === "object") {
@@ -634,6 +632,8 @@ export default function AIAgent() {
           },
         ]);
       }
+
+      setGenerateCommand(false);
 
       // If the input is neither the command nor a valid JSON
       setMessages((prev) => [
