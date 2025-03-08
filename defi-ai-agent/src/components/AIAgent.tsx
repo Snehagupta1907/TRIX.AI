@@ -58,7 +58,9 @@ export default function AIAgent() {
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
     null
   );
-
+  const delay = async (ms: number) => {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  };
   const [generateCommand, setGenerateCommand] = useState(false);
 
   const [crossChainState, setCrossChainState] = useState<CrossChainState>({
@@ -533,7 +535,10 @@ export default function AIAgent() {
         setGenerateCommand(true); // Set flag to expect ABI JSON next
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "Please provide the ABI JSON string." },
+          {
+            role: "assistant",
+            content: "Please provide the Function Signature in JSON string.",
+          },
         ]);
         return;
       }
@@ -582,7 +587,6 @@ export default function AIAgent() {
           inputData = [inputData];
         }
 
-        console.log(inputData, "Arreay");
         for (const func of inputData) {
           if (!func.name || !func.inputs) {
             setMessages((prev) => [
@@ -634,16 +638,19 @@ export default function AIAgent() {
         ]);
       }
 
-      setGenerateCommand(false);
-
       // If the input is neither the command nor a valid JSON
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content: "Unknown command. Please enter 'generate_function' first.",
-        },
-      ]);
+      if (!generateCommand) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Hey, I'm Trix! If you wanna generate an integration function, write 'generate_function' and follow the steps. 🚀",
+          },
+        ]);
+      }
+
+      setGenerateCommand(false);
     } catch (error) {
       setMessages((prev) => [
         ...prev,
@@ -950,7 +957,6 @@ export default function AIAgent() {
       icon: <ArrowUpDown size={20} />,
     },
     { id: "mint", label: "Mint", icon: <ImagePlay size={20} /> },
-   
   ];
 
   const visibleTabs = isConnected
