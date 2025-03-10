@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { queryLLM } from '@/utils/ai';
 import { formatTradingPrompt } from '@/utils/prompt';
 import { NextResponse } from 'next/server';

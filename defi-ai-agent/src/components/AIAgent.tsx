@@ -52,7 +52,7 @@ export default function AIAgent() {
 
   const [userInput, setUserInput] = useState("");
   const [activeTab, setActiveTab] = useState<TabType>("general");
-  const [selectedChain, setSelectedChain] = useState<Chain>("mantle-sepolia");
+  const [selectedChain, setSelectedChain] = useState<Chain>("sonic");
   const [error, setError] = useState("");
   // NEW: State to hold the NFT data waiting for confirmation
   const [pendingNFT, setPendingNFT] = useState<{ nftIpfsUrl: string } | null>(
@@ -965,8 +965,8 @@ export default function AIAgent() {
 
   const chains = [
     // { id: "arbitrum", label: "Arbitrum" },
-    { id: "mantle-sepolia", label: "Mantle Sepolia" },
-    // { id: "sonic", label: "Sonic Blaze Testnet" },
+    // { id: "mantle-sepolia", label: "Mantle Sepolia" },
+    { id: "sonic", label: "Sonic Blaze Testnet" },
   ];
 
   const StarField = () => {
