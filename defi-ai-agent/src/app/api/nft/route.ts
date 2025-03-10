@@ -10,7 +10,7 @@ type Chain = "arbitrum" | "mantle-sepolia" | "sonic" | "sepolia";
 const RPC_URL_MAP: Record<Chain, string> = {
   arbitrum: "https://arb1.arbitrum.io/rpc", // Sample endpoint for Arbitrum
   "mantle-sepolia": "https://endpoints.omniatech.io/v1/mantle/sepolia/public", // Sample endpoint for Mantle
-  "sonic": "wss://sonic-testnet.drpc.org", // Replace with the actual Sonic RPC endpoint
+  "sonic": "https://rpc.blaze.soniclabs.com", // Replace with the actual Sonic RPC endpoint
   sepolia: "https://sepolia.rpc.endpoint", // Replace with the actual Sepolia RPC endpoint
 };
 
