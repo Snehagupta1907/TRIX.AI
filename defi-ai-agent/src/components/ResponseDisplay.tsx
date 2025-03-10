@@ -39,7 +39,7 @@ export default function ResponseDisplay({ response, isLoading = false }: Respons
         clearInterval(interval);
         setIsComplete(true);
       }
-    }, 10); // Adjust speed as needed
+    }, 1); // Adjust speed as needed
     
     return () => clearInterval(interval);
   }, [response, isLoading, currentIndex]);
@@ -103,7 +103,7 @@ export default function ResponseDisplay({ response, isLoading = false }: Respons
             <img 
               src={response.imageSrc} 
               alt="Generated NFT" 
-              className="w-48 h-48 object-cover rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 grayscale"
+              className="w-48 h-48 object-cover rounded-lg shadow-2xl transition-all duration-300 hover:scale-105 "
             />
           </div>
         </div>
