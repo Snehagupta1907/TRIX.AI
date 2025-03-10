@@ -14,9 +14,9 @@ async function getTradingData() {
       throw new Error('Unexpected API response structure');
     }
 
-    const mantleDexs = dexData.protocols
+    const sonicDexs = dexData.protocols
       .filter((dex: any) =>
-        dex.chains?.some((chain: string) => chain.toLowerCase() === "mantle")
+        dex.chains?.some((chain: string) => chain.toLowerCase() === "sonic")
       )
       .slice(0, 10) // Limit to top 10 entries to reduce size
       .map((dex: any) => ({
@@ -28,8 +28,8 @@ async function getTradingData() {
         logo: dex.logo
       }));
 
-    console.log(mantleDexs);
-    return mantleDexs;
+    console.log(sonicDexs);
+    return sonicDexs;
   } catch (error) {
     console.error('DefiLlama Trading API Error:', error);
     throw new Error('Failed to fetch trading data from DefiLlama');

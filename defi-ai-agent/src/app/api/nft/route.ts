@@ -52,8 +52,10 @@ export async function POST(request: NextRequest) {
     const wallet = new ethers.Wallet(privateKey, provider);
     const signer = wallet.connect(provider);
 
+
     // Get the NFT contract address for the specified chain
     const nftContractAddress = AINFT_ADDRESS_MAP[chain];
+    console.log(nftContractAddress,chain,signer)
     const nftContract = new ethers.Contract(nftContractAddress, AINFT_ABI, signer);
 
     const tx = await nftContract.mintNFT(WALLET_ADDRESS, TOKEN_URI);

@@ -28,7 +28,7 @@ Format your response as:
 
 export function formatTradingPrompt(data: string) {
   return `You are a DeFi AI assistant. Your name is Trix. You help users with cryptocurrency tasks and provide accurate information.
-Analyze the following DEX trading data on Mantle and provide the best trading opportunities.
+Analyze the following DEX trading data on Sonic and provide the best trading opportunities.
 Data: ${data}
 Consider liquidity, trading volume, fees, and potential slippage.
 Format your response as:
