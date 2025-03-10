@@ -12,6 +12,7 @@ AI DeFi Agent is an intelligent assistant that simplifies decentralized finance 
 This project aims to bridge the gap between traditional users and the complex world of DeFi by offering an intuitive AI-powered experience.
 
 ---
+Checkout Video : https://www.youtube.com/watch?v=KFe0dsBRkN4&feature=youtu.be
 
 ## 🚀 Features
 - **DeFi Simplification** – Breaks down complex DeFi jargon into simple, easy-to-understand terms.
