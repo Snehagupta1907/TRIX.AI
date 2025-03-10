@@ -7,7 +7,7 @@ type Chain = "arbitrum" | "mantle-sepolia" | "sonic" | "sepolia";
 export const AINFT_ADDRESS_MAP: Record<Chain, string> = {
   arbitrum: "", // Example address for Arbitrum
   "mantle-sepolia": "0xdeBCD0975753BFE290CE7ca42ffB5CE7917463F2", // Replace with actual Mantle address
-  sonic: "0xeB4BC894886a5695D39d893bD5be6540ba09E62a",   // Replace with actual Sonic address
+  sonic: "0x82CA1b39805C0050CbCdF3F9b73Fc35E60D01543",   // Replace with actual Sonic address
   sepolia: ""  // Replace with actual Sepolia address
 };
 
